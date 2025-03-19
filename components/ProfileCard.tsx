@@ -19,6 +19,7 @@ import { SignInButton, SignUpButton } from "@clerk/nextjs";
 export const ProfileCard = async () => {
   const { userId } = await auth();
   const user = await getUser(userId);
+  console.log(user);
   if (!user) return <UnAuthenticatedSidebar />;
 
   return (
