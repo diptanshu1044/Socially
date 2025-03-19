@@ -22,9 +22,7 @@ export const CreatePost = () => {
     if (!content.trim()) return;
     setIsPosting(true);
     try {
-      // const result = await createPost(content, imageUrl);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      const result = { success: true, post: {} };
+      const result = await createPost(content, imageUrl);
       if (result?.success) {
         // reset the form
         setContent("");
@@ -35,6 +33,7 @@ export const CreatePost = () => {
       }
     } catch (error) {
       console.error("Failed to create post:", error);
+      sonner.error("Failed to create post");
     } finally {
       setIsPosting(false);
     }
