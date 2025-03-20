@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 export const WhoToFollow = async () => {
   const randomUsers = await getRandomUsers();
   return (
-    <Card className="w-full">
+    <Card className="w-full sticky top-24">
       <CardHeader>
         <CardTitle> Who to follow </CardTitle>
       </CardHeader>

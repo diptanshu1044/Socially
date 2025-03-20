@@ -23,7 +23,7 @@ export const ProfileCard = async () => {
   if (!user) return <UnAuthenticatedSidebar />;
 
   return (
-    <Card className="h-[25.5rem] w-[21rem] p-8 sticky top-20">
+    <Card className="h-[25.5rem] w-[21rem] p-8 sticky top-24">
       <CardHeader className="flex flex-col justify-center items-center">
         <Avatar className="h-16 w-16">
           <AvatarImage src={user?.image as string} />

@@ -40,7 +40,7 @@ export const Navbar = () => {
 
   return (
     <>
-      <div className="flex justify-evenly gap-20 md:gap-48 lg:gap-96 w-full h-20 px-4 py-2 sticky ">
+      <div className="flex justify-evenly gap-20 md:gap-48 lg:gap-96 w-full h-20 px-4 py-2 sticky top-0 z-50 backdrop-blur-xl">
         <div className="flex justify-center items-center">
           <Link
             href="/"
