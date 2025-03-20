@@ -132,6 +132,8 @@ export const toggleFollow = async (targetUserId: string) => {
           },
         },
       });
+      revalidatePath("/");
+      return { success: true, follow: true };
     } else {
       await prisma.$transaction([
         prisma.follow.create({
@@ -148,9 +150,12 @@ export const toggleFollow = async (targetUserId: string) => {
           },
         }),
       ]);
+
+      revalidatePath("/");
+      return { success: true, follow: false };
     }
-    revalidatePath("/");
-    return { success: true };
+    // revalidatePath("/");
+    // return { success: true };
   } catch (e) {
     console.log(e);
     return { success: false, error: e };
