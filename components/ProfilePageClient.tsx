@@ -42,15 +42,14 @@ function ProfilePageClient({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: user?.name || "",
+    bio: user?.bio || "",
+    location: user?.location || "",
+    website: user?.website || "",
+  });
 
   if (!user) return null;
-
-  const [editForm, setEditForm] = useState({
-    name: user.name || "",
-    bio: user.bio || "",
-    location: user.location || "",
-    website: user.website || "",
-  });
 
   const handleEditSubmit = async () => {
     const formData = new FormData();
@@ -73,6 +72,7 @@ function ProfilePageClient({
       await toggleFollow(user ? user.id : "");
       setIsFollowing(!isFollowing);
     } catch (error) {
+      console.log("Error toggling follow:", error);
       toast.error("Failed to update follow status");
     } finally {
       setIsUpdatingFollow(false);

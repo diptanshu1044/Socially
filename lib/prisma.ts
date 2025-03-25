@@ -1,14 +1,23 @@
 // lib/prisma.ts
 import { PrismaClient } from "@prisma/client";
 
-declare global {
-  var prisma: PrismaClient | undefined;
+// Define an interface to extend globalThis with the prisma property
+interface GlobalWithPrisma {
+  prisma?: PrismaClient;
 }
 
+// Create a singleton function for PrismaClient
 const prismaClientSingleton = () => {
   return new PrismaClient();
 };
 
-export const prisma: PrismaClient = global.prisma ?? prismaClientSingleton();
+// Initialize prisma as a singleton, checking if it already exists in globalThis
+const prisma: PrismaClient =
+  (globalThis as GlobalWithPrisma).prisma ?? prismaClientSingleton();
 
-if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+// Store the instance in globalThis only in non-production environments
+if (process.env.NODE_ENV !== "production") {
+  (globalThis as GlobalWithPrisma).prisma = prisma;
+}
+
+export { prisma };

@@ -15,8 +15,6 @@ import { LikePostButton } from "./LikePostButton";
 import { FormatTimeAgo } from "./FormatTimeAgo";
 import { CommentButton } from "./CommentButton";
 import { CommentSection } from "./CommentSection";
-import { Separator } from "./ui/separator";
-// import { useCommentStore } from "@/store/comment.store";
 
 export interface PostCardProps {
   post: NewPost;
@@ -24,7 +22,6 @@ export interface PostCardProps {
 }
 
 export const PostCard = ({ post, dbUserId }: PostCardProps) => {
-  // const { showCommentSection } = useCommentStore();
   return (
     <Card className="my-4 px-4">
       <CardHeader className="flex flex-row gap-4">
@@ -73,13 +70,11 @@ export const PostCard = ({ post, dbUserId }: PostCardProps) => {
             dbUserId={dbUserId}
           />
         </div>
-        {/* {showCommentSection && ( */}
         <CommentSection
           comments={post.comments}
           dbUserId={dbUserId}
           thisPostId={post.id}
         />
-        {/* )} */}
       </CardFooter>
     </Card>
   );

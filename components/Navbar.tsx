@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, useClerk, useUser } from "@clerk/nextjs";
+import { SignedIn, SignedOut, useClerk } from "@clerk/nextjs";
 import { UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import ModeToggle from "@/components/ModeToggle";
@@ -12,16 +12,11 @@ import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import {
   Sheet,
-  SheetClose,
   SheetTitle,
-  SheetFooter,
-  SheetHeader,
   SheetContent,
   SheetTrigger,
-  SheetDescription,
 } from "@/components/ui/sheet";
-import { getCurrentUser, syncUser } from "@/actions/user.action";
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUser } from "@/actions/user.action";
 
 type User = Awaited<ReturnType<typeof getCurrentUser>>;
 
