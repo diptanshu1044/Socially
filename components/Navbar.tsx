@@ -20,17 +20,33 @@ import {
   SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { syncUser } from "@/actions/user.action";
+import { getCurrentUser, syncUser } from "@/actions/user.action";
 import { auth } from "@clerk/nextjs/server";
+
+type User = Awaited<ReturnType<typeof getCurrentUser>>;
 
 export const Navbar = () => {
   const { signOut } = useClerk();
   const router = useRouter();
   const { theme } = useTheme();
+  const [user, setUser] = useState<User>(null);
 
   const [signInVariant, setSignInVariant] = useState("default");
   const [signUpVariant, setSignUpVariant] = useState("secondary");
   const [signOutVariant, setSignOutVariant] = useState("default");
+
+  useEffect(() => {
+    const findUser = async () => {
+      try {
+        const usr = await getCurrentUser();
+        setUser(usr);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+
+    findUser();
+  }, []);
 
   useEffect(() => {
     setSignInVariant(theme === "dark" ? "secondary" : "default");
@@ -51,18 +67,28 @@ export const Navbar = () => {
         </div>
         <div className="hidden tablet:flex justify-evenly items-center gap-12">
           <ModeToggle />
-          <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
-            <House />
-            <h2>Home</h2>
-          </div>
-          <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
-            <Bell />
-            <h2>Notifications</h2>
-          </div>
-          <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
-            <User />
-            <h2>Profile</h2>
-          </div>
+          <Link href="/">
+            <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
+              <House />
+              <h2>Home</h2>
+            </div>
+          </Link>
+          {user && (
+            <SignedIn>
+              <Link href="/notifications">
+                <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
+                  <Bell />
+                  <h2>Notifications</h2>
+                </div>
+              </Link>
+              <Link href={`/profile/${user.username}`}>
+                <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
+                  <User />
+                  <h2>Profile</h2>
+                </div>
+              </Link>
+            </SignedIn>
+          )}
           <SignedIn>
             <div className="flex gap-4 justify-center items-center">
               <UserButton />

@@ -3,7 +3,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { User } from "@prisma/client";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export const syncUser = async () => {
   try {
@@ -59,51 +59,79 @@ export const getUser = async (clerkId: string | null): Promise<User> => {
   }
 };
 
-export const getDbUserId = async (): Promise<string> => {
+export const getDbUserId = async (): Promise<string | null> => {
   const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error("unauthorized");
+  if (!clerkId) return null;
   const user = await getUser(clerkId);
-  if (!user) throw new Error("User not found");
+  if (!user) return null;
   return user.id;
 };
 
 export const getRandomUsers = async () => {
   try {
     const userId = await getDbUserId();
-    const users = await prisma.user.findMany({
-      where: {
-        AND: [
-          {
-            NOT: {
-              id: userId,
+
+    if (!userId) {
+      const users = await prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          _count: {
+            select: {
+              followers: true,
+              following: true,
             },
           },
-          {
-            NOT: {
-              followers: {
-                some: {
-                  followerId: userId,
+        },
+        orderBy: {
+          id: "asc", // This is just a placeholder
+        },
+        take: 3,
+      });
+      // Shuffle the array
+      const shuffled = users.sort(() => Math.random() - 0.5);
+      return shuffled;
+    } else {
+      const users = await prisma.user.findMany({
+        where: {
+          AND: [
+            {
+              NOT: {
+                id: userId,
+              },
+            },
+            {
+              NOT: {
+                followers: {
+                  some: {
+                    followerId: userId,
+                  },
                 },
               },
             },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        image: true,
-        _count: {
-          select: {
-            followers: true,
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          _count: {
+            select: {
+              followers: true,
+              following: true,
+            },
           },
         },
-      },
-      take: 3,
-    });
+        take: 10, // Get more than needed
+      });
 
-    return users;
+      // Shuffle and take first 3
+      const shuffled = users.sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, 3);
+    }
   } catch (e) {
     console.log(`Error fetching random users: ${e}`);
     return [];
@@ -113,7 +141,9 @@ export const getRandomUsers = async () => {
 export const toggleFollow = async (targetUserId: string) => {
   try {
     const userId = await getDbUserId();
+    if (!userId) throw new Error("Unauthorized: User not found");
     if (userId === targetUserId) throw new Error("Cannot follow yourself");
+
     const existingFollow = await prisma.follow.findUnique({
       where: {
         followerId_followingId: {
@@ -132,8 +162,7 @@ export const toggleFollow = async (targetUserId: string) => {
           },
         },
       });
-      revalidatePath("/");
-      return { success: true, follow: true };
+      return { success: true, follow: false };
     } else {
       await prisma.$transaction([
         prisma.follow.create({
@@ -150,14 +179,29 @@ export const toggleFollow = async (targetUserId: string) => {
           },
         }),
       ]);
-
-      revalidatePath("/");
-      return { success: true, follow: false };
+      return { success: true, follow: true }; // Following after follow
     }
-    // revalidatePath("/");
-    // return { success: true };
+  } catch (e) {
+    console.log("Error in toggleFollow:", e);
+    throw e; // Re-throw for client to handle
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    const userId = await getDbUserId();
+    if (!userId) throw new Error("Unauthorized: User not found");
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    revalidateTag("user");
+    return user;
   } catch (e) {
     console.log(e);
-    return { success: false, error: e };
+    throw e;
   }
 };

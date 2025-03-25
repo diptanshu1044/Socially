@@ -17,7 +17,7 @@ export const WhoToFollow = async () => {
             name={user.name || ""}
             username={user.username}
             imageUrl={user.image || ""}
-            followers={user._count.followers}
+            followers={user._count.following}
           />
         ))}
       </CardContent>

@@ -18,6 +18,8 @@ export const CreatePost = () => {
   const [isPosting, setIsPosting] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
 
+  if (!user) return null;
+
   const handleSubmit = async () => {
     if (!content.trim()) return;
     setIsPosting(true);
@@ -46,7 +48,7 @@ export const CreatePost = () => {
         <div className="space-y-4">
           <div className="flex space-x-4">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+              <AvatarImage src={user?.imageUrl || ""} />
             </Avatar>
             <Textarea
               placeholder="What's on your mind?"

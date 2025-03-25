@@ -37,8 +37,8 @@ export const ProfileCard = async () => {
       </CardHeader>
       <Separator />
       <CardContent className="flex justify-between items-center font-light">
-        <CardAction>Followers: {user?._count.followers}</CardAction>
-        <CardAction>Following: {user?._count.following}</CardAction>
+        <CardAction>Followers: {user?._count.following}</CardAction>
+        <CardAction>Following: {user?._count.followers}</CardAction>
       </CardContent>
       <Separator />
       <CardFooter className="flex flex-col items-center gap-4 font-light">
@@ -62,28 +62,26 @@ export const ProfileCard = async () => {
 };
 
 const UnAuthenticatedSidebar = () => (
-  <div className="sticky top-20 max-w-[18rem]">
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-center text-xl font-semibold">
-          Welcome Back!
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-center text-muted-foreground mb-4">
-          Login to access your profile and connect with others.
-        </p>
-        <SignInButton mode="modal">
-          <Button className="w-full" variant="outline">
-            Login
-          </Button>
-        </SignInButton>
-        <SignUpButton mode="modal">
-          <Button className="w-full mt-2" variant="default">
-            Sign Up
-          </Button>
-        </SignUpButton>
-      </CardContent>
-    </Card>
-  </div>
+  <Card className="sticky top-24 max-w-[18rem] h-64">
+    <CardHeader>
+      <CardTitle className="text-center text-xl font-semibold">
+        Welcome Back!
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-center text-muted-foreground mb-4">
+        Login to access your profile and connect with others.
+      </p>
+      <SignInButton mode="modal">
+        <Button className="w-full" variant="outline">
+          Login
+        </Button>
+      </SignInButton>
+      <SignUpButton mode="modal">
+        <Button className="w-full mt-2" variant="default">
+          Sign Up
+        </Button>
+      </SignUpButton>
+    </CardContent>
+  </Card>
 );
