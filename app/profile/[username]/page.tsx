@@ -6,27 +6,30 @@ import {
 } from "@/actions/profile.action";
 import ProfilePageClient from "@/components/ProfilePageClient";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
 
 export async function generateMetadata({
   params,
 }: {
-  params: { username: string };
-}) {
-  const user = await getProfileByUsername(params.username);
+  params: Promise<{ username: string }>;
+}): Promise<Metadata> {
+  const { username } = await params;
+  const user = await getProfileByUsername(username);
   console.log(user);
-  if (!user) return null;
+  if (!user) return {};
   return {
     title: `Profile - ${user.name || user.username}`,
     description: `Profile page for ${user.name || user.username}`,
   };
 }
 
-export default async function ProfilePage({
+// Use Next.js built-in types for dynamic routes
+export default async function Page({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }) {
-  const { username } = params;
+  const { username } = await params;
   const user = await getProfileByUsername(username);
   if (!user) return notFound();
 

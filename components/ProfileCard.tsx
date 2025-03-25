@@ -16,10 +16,16 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 
+type User = Awaited<ReturnType<typeof getUser>> & {
+  _count?: {
+    following: number;
+    followers: number;
+  };
+};
+
 export const ProfileCard = async () => {
   const { userId } = await auth();
-  const user = await getUser(userId);
-  console.log(user);
+  const user: User = await getUser(userId);
   if (!user) return <UnAuthenticatedSidebar />;
 
   return (

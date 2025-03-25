@@ -17,6 +17,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { getCurrentUser } from "@/actions/user.action";
+import { buttonVariants } from "@/components/ui/button";
+
+type ButtonVariant = Parameters<typeof buttonVariants>[number]["variant"];
 
 type User = Awaited<ReturnType<typeof getCurrentUser>>;
 
@@ -26,9 +29,11 @@ export const Navbar = () => {
   const { theme } = useTheme();
   const [user, setUser] = useState<User>(null);
 
-  const [signInVariant, setSignInVariant] = useState("default");
-  const [signUpVariant, setSignUpVariant] = useState("secondary");
-  const [signOutVariant, setSignOutVariant] = useState("default");
+  const [signInVariant, setSignInVariant] = useState<ButtonVariant>("default");
+  const [signUpVariant, setSignUpVariant] =
+    useState<ButtonVariant>("secondary");
+  const [signOutVariant, setSignOutVariant] =
+    useState<ButtonVariant>("default");
 
   useEffect(() => {
     const findUser = async () => {
@@ -100,6 +105,7 @@ export const Navbar = () => {
               >
                 Sign In
               </Button>
+
               <Button
                 variant={signUpVariant}
                 onClick={() => router.push("/signup")}
