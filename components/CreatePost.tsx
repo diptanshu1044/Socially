@@ -42,9 +42,9 @@ export const CreatePost = () => {
   };
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-4 md:mb-6">
       <Toaster />
-      <CardContent className="pt-6">
+      <CardContent className="pt-0 md:pt-6">
         <div className="space-y-4">
           <div className="flex space-x-4">
             <Avatar className="w-10 h-10">

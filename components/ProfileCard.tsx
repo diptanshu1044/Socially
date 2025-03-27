@@ -10,7 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@clerk/nextjs/server";
 import { getUser } from "@/actions/user.action";
-import { Link as LinkIcon, MapPin } from "lucide-react";
+import { Link as LinkIcon, MapPin, Pencil } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
@@ -26,15 +26,28 @@ type User = Awaited<ReturnType<typeof getUser>> & {
 export const ProfileCard = async () => {
   const { userId } = await auth();
   const user: User = await getUser(userId);
-  if (!user) return <UnAuthenticatedSidebar />;
+  if (!user)
+    return (
+      <div className="flex md:static justify-center md:justify-start items-center md:items-start">
+        <UnAuthenticatedSidebar />
+      </div>
+    );
 
   return (
-    <Card className="h-[25.5rem] w-[21rem] p-8 sticky top-24">
+    <Card className="h-[25.5rem] max-w-[23rem] md:w-[21rem] p-8  md:sticky md:top-24 relative">
       <CardHeader className="flex flex-col justify-center items-center">
         <Avatar className="h-16 w-16">
           <AvatarImage src={user?.image as string} />
           <AvatarFallback>{user?.name?.split(" ")[0][0] ?? ""}</AvatarFallback>
         </Avatar>
+        <Link
+          href={`/profile/${user.username}`}
+          className="absolute top-3 right-3"
+        >
+          <Button className="mt-2" variant="ghost">
+            <Pencil className=" opacity-60 w-6 h-6" />
+          </Button>
+        </Link>
         <CardTitle className="text-xl pt-3">{user?.name}</CardTitle>
         <CardDescription className="flex flex-col justify-center items-center">
           <h4 className="text-lg">{user?.username}</h4>
@@ -44,6 +57,7 @@ export const ProfileCard = async () => {
       <Separator />
       <CardContent className="flex justify-between items-center font-light">
         <CardAction>Followers: {user?._count.following}</CardAction>
+        &nbsp;&nbsp;&nbsp;&nbsp;
         <CardAction>Following: {user?._count.followers}</CardAction>
       </CardContent>
       <Separator />
@@ -68,7 +82,7 @@ export const ProfileCard = async () => {
 };
 
 const UnAuthenticatedSidebar = () => (
-  <Card className="sticky top-24 max-w-[18rem] h-64">
+  <Card className="static md:sticky top-24 max-w-[25rem] md:max-w-[18rem] h-64">
     <CardHeader>
       <CardTitle className="text-center text-xl font-semibold">
         Welcome Back!

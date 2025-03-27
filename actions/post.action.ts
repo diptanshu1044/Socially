@@ -201,7 +201,6 @@ export const deletePost = async (postId: string) => {
     });
 
     if (!post) throw new Error("Failed to delete post");
-    console.log(userId, post.authorId);
 
     if (userId !== post.authorId)
       throw new Error(

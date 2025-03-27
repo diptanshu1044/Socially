@@ -39,7 +39,6 @@ export default function NotificationPage() {
       try {
         setLoading(true);
         const notifications = await getNotifications();
-        console.log(notifications);
         setNotifications(notifications);
 
         const unReadIds = notifications.filter((n) => !n.read).map((n) => n.id);
@@ -76,7 +75,7 @@ export default function NotificationPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className="h-[calc(100vh-12rem)]">
+            <ScrollArea className="max-h-[calc(100vh-18rem)] overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
                   No notifications yet

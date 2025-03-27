@@ -23,8 +23,8 @@ export interface PostCardProps {
 
 export const PostCard = ({ post, dbUserId }: PostCardProps) => {
   return (
-    <Card className="my-4 px-4">
-      <CardHeader className="flex flex-row gap-4">
+    <Card className="my-2 md:my-4 px-1 md:px-4 py-4 md:py-6">
+      <CardHeader className="flex flex-row gap-2 md:gap-4 px-2 md:px-6">
         <div className="flex justify-center items-center">
           <Avatar>
             <AvatarImage src={post.author.image || ""} />
@@ -33,10 +33,10 @@ export const PostCard = ({ post, dbUserId }: PostCardProps) => {
             </AvatarFallback>
           </Avatar>
         </div>
-        <div className="flex gap-4 flex-col grow">
+        <div className="flex gap-1 md:gap-4 flex-col grow">
           <div className="flex gap-2 items-center">
             <CardTitle>{post.author.name}</CardTitle>
-            <CardDescription>
+            <CardDescription className="max-h-[1.25rem] md:h-auto overflow-y-hidden md:overflow-auto">
               @{post.author.username} ·{" "}
               {<FormatTimeAgo createdAt={post.createdAt} />}
             </CardDescription>
@@ -57,7 +57,7 @@ export const PostCard = ({ post, dbUserId }: PostCardProps) => {
         </CardContent>
       )}
       <CardFooter className="flex flex-col items-start gap-2 px-0">
-        <div className="flex gap-4 pb-3">
+        <div className="flex gap-4 pb-3 ml-10 md:ml-14">
           <LikePostButton
             likes={post._count.likes}
             dbUserId={dbUserId}

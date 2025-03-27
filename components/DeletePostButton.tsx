@@ -20,7 +20,6 @@ export const DeletePostButton = ({ postId }: { postId: string }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    console.log("Deleting post");
     setIsDeleting(true);
     try {
       await deletePost(postId);
@@ -35,7 +34,10 @@ export const DeletePostButton = ({ postId }: { postId: string }) => {
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
+      <AlertDialogTrigger
+        asChild
+        className="gap-0 md:gap-2 has-[>svg]:px-1 md:has-[>svg]:px-3"
+      >
         <Button
           variant="ghost"
           disabled={isDeleting}

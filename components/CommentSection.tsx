@@ -1,5 +1,4 @@
 "use client";
-
 import { SendIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -37,6 +36,7 @@ export const CommentSection = ({
 }: CommentSectionProps) => {
   const [isCommenting, setIsCommenting] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [expandedComments, setExpandedComments] = useState<string[]>([]);
   const { user } = useUser();
 
   const handleComment = async () => {
@@ -53,6 +53,45 @@ export const CommentSection = ({
       setIsCommenting(false);
       setNewComment("");
     }
+  };
+
+  const toggleCommentExpansion = (commentId: string) => {
+    setExpandedComments((prev) =>
+      prev.includes(commentId)
+        ? prev.filter((id) => id !== commentId)
+        : [...prev, commentId],
+    );
+  };
+
+  const renderCommentContent = (
+    comment: CommentSectionProps["comments"][number],
+  ) => {
+    const isExpanded = expandedComments.includes(comment.id);
+    const MAX_LENGTH = 150; // Adjust this as needed
+    const isLongComment = comment.content.length > MAX_LENGTH;
+
+    return (
+      <div className="space-y-1">
+        <div className="max-w-[300px] md:max-w-[400px] break-words">
+          {isExpanded
+            ? comment.content
+            : isLongComment
+              ? `${comment.content.slice(0, MAX_LENGTH)}`
+              : comment.content}
+        </div>
+        {isLongComment && (
+          <div>
+            <Button
+              variant="link"
+              className="text-blue-500 p-0 h-auto block"
+              onClick={() => toggleCommentExpansion(comment.id)}
+            >
+              {isExpanded ? "See Less" : "See More"}
+            </Button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const { showCommentSection, postId } = useCommentStore();
@@ -81,7 +120,7 @@ export const CommentSection = ({
                           {<FormatTimeAgo createdAt={comment.createdAt} />}
                         </span>
                       </div>
-                      <div>{comment.content}</div>
+                      {renderCommentContent(comment)}
                     </div>
                   </div>
                 ))}

@@ -15,6 +15,7 @@ import {
   SheetTitle,
   SheetContent,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { getCurrentUser } from "@/actions/user.action";
 import { buttonVariants } from "@/components/ui/button";
@@ -126,18 +127,34 @@ export const Navbar = () => {
                 Menu
               </SheetTitle>
               <Separator />
-              <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
-                <House />
-                <h2>Home</h2>
-              </div>
-              <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
-                <Bell />
-                <h2>Notifications</h2>
-              </div>
-              <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
-                <User />
-                <h2>Profile</h2>
-              </div>
+              <SheetClose asChild>
+                <Link href="/">
+                  <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
+                    <House />
+                    <h2>Home</h2>
+                  </div>
+                </Link>
+              </SheetClose>
+              {user && (
+                <SignedIn>
+                  <SheetClose asChild>
+                    <Link href="/notifications">
+                      <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
+                        <Bell />
+                        <h2>Notifications</h2>
+                      </div>
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link href={`/profile/${user?.username}`}>
+                      <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
+                        <User />
+                        <h2>Profile</h2>
+                      </div>
+                    </Link>
+                  </SheetClose>
+                </SignedIn>
+              )}
               <SignedIn>
                 <div className="flex gap-4 justify-center items-center">
                   <UserButton />
