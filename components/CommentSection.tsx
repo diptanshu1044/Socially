@@ -10,6 +10,7 @@ import { createComment } from "@/actions/post.action";
 import { toast } from "sonner";
 import { useCommentStore } from "@/store/comment.store";
 import { Separator } from "./ui/separator";
+import Link from "next/link";
 
 interface CommentSectionProps {
   comments: {
@@ -106,19 +107,23 @@ export const CommentSection = ({
               {comments.length > 0 &&
                 comments.map((comment) => (
                   <div key={comment.id} className="flex px-3 py-2 gap-3">
-                    <Avatar>
-                      <AvatarImage src={comment.author.image || ""} />
-                      <AvatarFallback>
-                        {comment.author.username[0].toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Link href={`/profile/${comment.author.username}`}>
+                      <Avatar>
+                        <AvatarImage src={comment.author.image || ""} />
+                        <AvatarFallback>
+                          {comment.author.username[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
                     <div>
                       <div>
-                        <span>{comment.author.name}&nbsp;&nbsp;</span>
-                        <span className="text-gray-500">
-                          @{comment.author.username} &nbsp;·&nbsp;{"  "}
-                          {<FormatTimeAgo createdAt={comment.createdAt} />}
-                        </span>
+                        <Link href={`/profile/${comment.author.username}`}>
+                          <span>{comment.author.name}&nbsp;&nbsp;</span>
+                          <span className="text-gray-500">
+                            @{comment.author.username} &nbsp;·&nbsp;{"  "}
+                            {<FormatTimeAgo createdAt={comment.createdAt} />}
+                          </span>
+                        </Link>
                       </div>
                       {renderCommentContent(comment)}
                     </div>

@@ -15,6 +15,7 @@ import { LikePostButton } from "./LikePostButton";
 import { FormatTimeAgo } from "./FormatTimeAgo";
 import { CommentButton } from "./CommentButton";
 import { CommentSection } from "./CommentSection";
+import Link from "next/link";
 
 export interface PostCardProps {
   post: NewPost;
@@ -26,19 +27,26 @@ export const PostCard = ({ post, dbUserId }: PostCardProps) => {
     <Card className="my-2 md:my-4 px-1 md:px-4 py-4 md:py-6">
       <CardHeader className="flex flex-row gap-2 md:gap-4 px-2 md:px-6">
         <div className="flex justify-center items-center">
-          <Avatar>
-            <AvatarImage src={post.author.image || ""} />
-            <AvatarFallback>
-              {post.author.username?.[0].toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
+          <Link href={`/profile/${post.author.username}`}>
+            <Avatar>
+              <AvatarImage src={post.author.image || ""} />
+              <AvatarFallback>
+                {post.author.username?.[0].toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
         </div>
         <div className="flex gap-1 md:gap-4 flex-col grow">
           <div className="flex gap-2 items-center">
-            <CardTitle>{post.author.name}</CardTitle>
+            <Link href={`/profile/${post.author.username}`}>
+              <CardTitle>{post.author.name}</CardTitle>
+            </Link>
             <CardDescription className="max-h-[1.25rem] md:h-auto overflow-y-hidden md:overflow-auto">
-              @{post.author.username} ·{" "}
-              {<FormatTimeAgo createdAt={post.createdAt} />}
+              <Link href={`/profile/${post.author.username}`}>
+                {" "}
+                @{post.author.username}
+              </Link>
+              · {<FormatTimeAgo createdAt={post.createdAt} />}
             </CardDescription>
           </div>
           <div>

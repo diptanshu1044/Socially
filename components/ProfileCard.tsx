@@ -28,7 +28,7 @@ export const ProfileCard = async () => {
   const user: User = await getUser(userId);
   if (!user)
     return (
-      <div className="flex md:static justify-center md:justify-start items-center md:items-start">
+      <div className="flex justify-center md:justify-start items-center md:items-start md:sticky md:top-24">
         <UnAuthenticatedSidebar />
       </div>
     );
@@ -82,7 +82,7 @@ export const ProfileCard = async () => {
 };
 
 const UnAuthenticatedSidebar = () => (
-  <Card className="static md:sticky top-24 max-w-[25rem] md:max-w-[18rem] h-64">
+  <Card className="w-full md:sticky md:top-24 relative max-w-[25rem] md:max-w-[18rem] h-64">
     <CardHeader>
       <CardTitle className="text-center text-xl font-semibold">
         Welcome Back!
