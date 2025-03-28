@@ -125,6 +125,8 @@ export default function NotificationPage() {
                                   src={notification.post.image}
                                   alt="Post content"
                                   className="mt-2 rounded-md w-full max-w-[200px] h-auto object-cover"
+                                  width={200}
+                                  height={200}
                                 />
                               )}
                             </div>

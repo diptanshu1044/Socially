@@ -53,6 +53,8 @@ export const PostCard = ({ post, dbUserId }: PostCardProps) => {
             src={post.image}
             alt="Post image"
             className={`w-full h-auto object-cover`}
+            width={200}
+            height={200}
           />
         </CardContent>
       )}

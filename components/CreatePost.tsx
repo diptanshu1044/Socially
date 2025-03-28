@@ -8,8 +8,8 @@ import { Textarea } from "./ui/textarea";
 import { ImageIcon, Loader2Icon, SendIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { createPost } from "@/actions/post.action";
-import { Toaster, toast as sonner } from "sonner";
-// import ImageUpload from "./ImageUpload";
+import { toast } from "sonner";
+import ImageUpload from "./ImageUpload";
 
 export const CreatePost = () => {
   const { user } = useUser();
@@ -18,10 +18,9 @@ export const CreatePost = () => {
   const [isPosting, setIsPosting] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
 
-  if (!user) return null;
-
   const handleSubmit = async () => {
-    if (!content.trim()) return;
+    if (!content.trim() && !imageUrl) return;
+
     setIsPosting(true);
     try {
       const result = await createPost(content, imageUrl);
@@ -31,24 +30,23 @@ export const CreatePost = () => {
         setImageUrl("");
         setShowImageUpload(false);
 
-        sonner.success("Post created successfully");
+        toast.success("Post created successfully");
       }
     } catch (error) {
       console.error("Failed to create post:", error);
-      sonner.error("Failed to create post");
+      toast.error("Failed to create post");
     } finally {
       setIsPosting(false);
     }
   };
 
   return (
-    <Card className="mb-4 md:mb-6">
-      <Toaster />
-      <CardContent className="pt-0 md:pt-6">
+    <Card className="mb-6">
+      <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="flex space-x-4">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={user?.imageUrl || ""} />
+              <AvatarImage src={user?.imageUrl || "/avatar.png"} />
             </Avatar>
             <Textarea
               placeholder="What's on your mind?"
@@ -61,14 +59,14 @@ export const CreatePost = () => {
 
           {(showImageUpload || imageUrl) && (
             <div className="border rounded-lg p-4">
-              {/* <ImageUpload */}
-              {/*   endpoint="postImage" */}
-              {/*   value={imageUrl} */}
-              {/*   onChange={(url) => { */}
-              {/*     setImageUrl(url); */}
-              {/*     if (!url) setShowImageUpload(false); */}
-              {/*   }} */}
-              {/* /> */}
+              <ImageUpload
+                endpoint="postImage"
+                value={imageUrl}
+                onChange={(url) => {
+                  setImageUrl(url);
+                  if (!url) setShowImageUpload(false);
+                }}
+              />
             </div>
           )}
 
