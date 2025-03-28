@@ -2,6 +2,7 @@
 
 import { UploadDropzone } from "@/lib/uploadthing";
 import { XIcon } from "lucide-react";
+import Image from "next/image";
 
 interface ImageUploadProps {
   onChange: (url: string) => void;
@@ -13,7 +14,7 @@ function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
   if (value) {
     return (
       <div className="relative size-40">
-        <img
+        <Image
           src={value}
           alt="Upload"
           className="rounded-md size-40 object-cover"
