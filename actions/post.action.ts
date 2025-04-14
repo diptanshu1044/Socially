@@ -24,9 +24,13 @@ export const createPost = async (content: string, imageUrl?: string) => {
   }
 };
 
-export const getPosts = async () => {
+export const getPosts = async ({ page = 1, limit = 10 } = {}) => {
   try {
+    const skip = (page - 1) * limit;
+
     const posts = await prisma.post.findMany({
+      skip,
+      take: limit,
       orderBy: {
         createdAt: "desc",
       },
@@ -68,7 +72,14 @@ export const getPosts = async () => {
       },
     });
 
-    return posts;
+    // Count total posts for determining if there are more
+    const totalPosts = await prisma.post.count();
+
+    return {
+      posts,
+      hasMore: skip + posts.length < totalPosts,
+      totalPosts,
+    };
   } catch (e) {
     console.log(`Failed to get posts: ${e}`);
     throw new Error("Failed to get posts");
