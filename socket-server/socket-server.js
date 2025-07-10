@@ -1,6 +1,6 @@
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('../node_modules/@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -30,16 +30,26 @@ const io = new Server(httpServer, {
       "http://localhost:3000",
       "http://127.0.0.1:3000",
       `http://${networkIP}:3000`,
-      process.env.NEXT_PUBLIC_SITE_URL
+      `https://${networkIP}:3000`,
+      "http://0.0.0.0:3000",
+      "https://0.0.0.0:3000",
+      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.FRONTEND_URL,
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+      process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}` : null,
+      // Allow all origins for development (remove in production)
+      "*"
     ].filter(Boolean),
-    methods: ["GET", "POST"],
-    credentials: true
+    methods: ["GET", "POST", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
   },
   path: '/api/socket',
   addTrailingSlash: false,
   transports: ['websocket', 'polling'],
   pingTimeout: 60000,
   pingInterval: 25000,
+  allowEIO3: true
 });
 
 // Store typing states
@@ -59,7 +69,6 @@ io.use(async (socket, next) => {
     
     // For now, we'll trust the token and get user ID from client
     // In production, you'd verify the token here
-    socket.data.token = token;
     console.log(`Authentication successful for socket: ${socket.id}`);
     next();
   } catch (error) {
@@ -476,12 +485,14 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-const PORT = process.env.SOCKET_PORT || 8080;
+const PORT = process.env.PORT || process.env.SOCKET_PORT || 8080;
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Socket.io server running on port ${PORT}`);
   console.log(`Local access: http://localhost:${PORT}`);
   console.log(`Network access: http://${networkIP}:${PORT}`);
   console.log(`For mobile devices, use: http://${networkIP}:3000 (Next.js app)`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
 });
 
 // Graceful shutdown
