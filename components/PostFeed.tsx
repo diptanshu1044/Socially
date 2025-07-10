@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { PostCard } from "./PostCard";
 // Client component for handling infinite scroll
 export function PostFeed({ initialPosts, initialHasMore, dbUserId }) {
@@ -12,7 +12,7 @@ export function PostFeed({ initialPosts, initialHasMore, dbUserId }) {
   const loadedPostIds = useRef(new Set(initialPosts.map((post) => post.id)));
 
   // Function to load more posts
-  const loadMorePosts = async () => {
+  const loadMorePosts = useCallback(async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
@@ -50,10 +50,11 @@ export function PostFeed({ initialPosts, initialHasMore, dbUserId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, hasMore, page]);
 
   // Set up intersection observer for infinite scrolling
   useEffect(() => {
+    const currentLoaderRef = loaderRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
@@ -63,16 +64,16 @@ export function PostFeed({ initialPosts, initialHasMore, dbUserId }) {
       { threshold: 0.1 },
     );
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
+    if (currentLoaderRef) {
+      observer.observe(currentLoaderRef);
     }
 
     return () => {
-      if (loaderRef.current) {
-        observer.unobserve(loaderRef.current);
+      if (currentLoaderRef) {
+        observer.unobserve(currentLoaderRef);
       }
     };
-  }, [hasMore, loading]);
+  }, [hasMore, loading, loadMorePosts]);
 
   return (
     <>

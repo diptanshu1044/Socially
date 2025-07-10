@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getNotifications } from '@/actions/notification.action';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const notifications = await getNotifications();
     return NextResponse.json({ notifications });

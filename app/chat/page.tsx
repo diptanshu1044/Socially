@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getConversations } from "@/actions/chat.action";
-import { getDbUserId, getUser } from "@/actions/user.action";
+import { getDbUserId } from "@/actions/user.action";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { ChatInterface } from "@/components/ChatInterface";
@@ -10,6 +10,7 @@ import { ConversationList } from "@/components/ConversationList";
 import { UserSelection } from "@/components/UserSelection";
 import { ChatSearch } from "@/components/ChatSearch";
 import Loading from "@/components/LoadingSkeleton";
+import { Conversation } from "@/types/socket.types";
 
 export default function ChatPage({
   searchParams,
@@ -18,7 +19,7 @@ export default function ChatPage({
 }) {
   const { userId, isLoaded } = useAuth();
   const router = useRouter();
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [dbUserId, setDbUserId] = useState<string | null>(null);
   const [params, setParams] = useState<{ user?: string; conversation?: string }>({});
   const [isLoading, setIsLoading] = useState(true);

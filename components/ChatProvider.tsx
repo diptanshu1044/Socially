@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { ChatMessage, Conversation, SocketMessage, TypingIndicator } from '@/types/socket.types';
 import { useUser, useAuth } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
@@ -189,7 +188,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     return () => {
       // Cleanup will be handled by the main cleanup effect
     };
-  }, [user, currentUserId, getAuthToken]);
+  }, [user, currentUserId, getAuthToken, socket]);
 
   // Cleanup socket on unmount
   useEffect(() => {

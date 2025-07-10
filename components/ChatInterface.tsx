@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useChat } from './ChatProvider';
-import { getConversationMessages, sendMessage, createConversation } from '@/actions/chat.action';
+import { getConversationMessages, createConversation } from '@/actions/chat.action';
 import { ChatMessage } from '@/types/socket.types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
@@ -22,17 +22,24 @@ interface ChatInterfaceProps {
   selectedUserId?: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  username: string;
+  image?: string;
+}
+
 export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [otherUser, setOtherUser] = useState<any>(null);
+  const [otherUser, setOtherUser] = useState<User | null>(null);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { 
     socket, 
@@ -65,6 +72,45 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  const loadMessages = useCallback(async (convId: string) => {
+    setIsLoading(true);
+    try {
+      const result = await getConversationMessages(convId);
+      setMessages(result.messages);
+      
+      // Mark messages as read
+      const unreadMessageIds = result.messages
+        .filter(msg => msg.senderId !== currentUserId)
+        .map(msg => msg.id);
+      
+      if (unreadMessageIds.length > 0) {
+        markMessagesAsRead(convId, unreadMessageIds);
+      }
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId, markMessagesAsRead]);
+
+  const handleCreateConversation = useCallback(async (userId: string) => {
+    try {
+      const result = await createConversation([userId]);
+      if (result.success && result.conversation) {
+        setConversationId(result.conversation.id);
+        setOtherUser(result.conversation.participants.find(p => p.userId !== userId)?.user);
+        router.push(`/chat?conversation=${result.conversation.id}`);
+        loadMessages(result.conversation.id);
+        joinConversation(result.conversation.id);
+      } else {
+        toast.error('Failed to create conversation');
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast.error('Failed to create conversation');
+    }
+  }, [router, joinConversation, loadMessages]);
+
   useEffect(() => {
     if (selectedUserId && !currentConversationId) {
       // Create conversation with selected user
@@ -80,7 +126,7 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
         leaveConversation(currentConversationId);
       }
     };
-  }, [selectedUserId, currentConversationId]);
+  }, [selectedUserId, currentConversationId, handleCreateConversation, joinConversation, leaveConversation, loadMessages]);
 
   useEffect(() => {
     if (!socket) return;
@@ -152,45 +198,6 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
       }
     };
   }, [isTyping, currentConversationId, sendTypingIndicator]);
-
-  const handleCreateConversation = async (userId: string) => {
-    try {
-      const result = await createConversation([userId]);
-      if (result.success && result.conversation) {
-        setConversationId(result.conversation.id);
-        setOtherUser(result.conversation.participants.find(p => p.userId !== userId)?.user);
-        router.push(`/chat?conversation=${result.conversation.id}`);
-        loadMessages(result.conversation.id);
-        joinConversation(result.conversation.id);
-      } else {
-        toast.error('Failed to create conversation');
-      }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      toast.error('Failed to create conversation');
-    }
-  };
-
-  const loadMessages = async (convId: string) => {
-    setIsLoading(true);
-    try {
-      const result = await getConversationMessages(convId);
-      setMessages(result.messages);
-      
-      // Mark messages as read
-      const unreadMessageIds = result.messages
-        .filter(msg => msg.senderId !== currentUserId)
-        .map(msg => msg.id);
-      
-      if (unreadMessageIds.length > 0) {
-        markMessagesAsRead(convId, unreadMessageIds);
-      }
-    } catch (error) {
-      console.error('Failed to load messages:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentConversationId) return;

@@ -1,7 +1,5 @@
-import { NextRequest } from 'next/server';
 import { Server as NetServer } from 'http';
 import { Server as ServerIO } from 'socket.io';
-import { NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +13,7 @@ const typingUsers = new Map<string, Set<string>>();
 // Store user socket mappings
 const userSockets = new Map<string, string>();
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   if (!io) {
     console.log('Setting up enhanced socket.io server...');
     
@@ -47,7 +45,7 @@ export async function GET(req: NextRequest) {
         // In production, you'd verify the token here
         socket.data.token = token;
         next();
-      } catch (error) {
+      } catch {
         next(new Error('Authentication failed'));
       }
     });

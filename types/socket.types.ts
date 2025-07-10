@@ -20,6 +20,12 @@ export interface ChatMessage {
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
+  sender?: {
+    id: string;
+    name: string;
+    username: string;
+    image?: string;
+  };
 }
 
 export interface Conversation {

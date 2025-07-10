@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getConversations } from '@/actions/chat.action';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const conversations = await getConversations();
     return NextResponse.json({ conversations });

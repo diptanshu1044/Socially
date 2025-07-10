@@ -5,11 +5,17 @@ import { UserButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import { Bell, MessageCircle, Home } from "lucide-react";
 import Link from "next/link";
-import { useChat } from "./ChatProvider";
 import { useEffect, useState } from "react";
 
+interface Notification {
+  id: string;
+  read: boolean;
+  type: string;
+  message: string;
+  createdAt: string;
+}
+
 export function Navbar() {
-  const { isConnected } = useChat();
   const [notificationCount, setNotificationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
 
@@ -19,7 +25,7 @@ export function Navbar() {
         // Fetch unread notifications
         const notificationsResponse = await fetch('/api/notifications');
         const notificationsData = await notificationsResponse.json();
-        const unreadNotifications = notificationsData.notifications?.filter((n: any) => !n.read).length || 0;
+        const unreadNotifications = notificationsData.notifications?.filter((n: Notification) => !n.read).length || 0;
         setNotificationCount(unreadNotifications);
 
         // Fetch conversations for message count

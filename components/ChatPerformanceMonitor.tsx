@@ -18,7 +18,7 @@ export function ChatPerformanceMonitor() {
   useEffect(() => {
     if (!socket) return;
 
-    let connectionStartTime = Date.now();
+    const connectionStartTime = Date.now();
     let messageCount = 0;
     let totalResponseTime = 0;
     let responseCount = 0;
