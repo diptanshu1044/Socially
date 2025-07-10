@@ -1,37 +1,45 @@
+import { NextRequest } from 'next/server';
 import { Server as NetServer } from 'http';
+import { NextApiResponse } from 'next';
 import { Server as ServerIO } from 'socket.io';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 
-export const dynamic = 'force-dynamic';
+const prisma = new PrismaClient();
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Global variable to store the io instance
-let io: ServerIO | undefined;
-
-// Store typing states
-const typingUsers = new Map<string, Set<string>>();
-
-// Store user socket mappings
-const userSockets = new Map<string, string>();
-
-export async function GET() {
-  if (!io) {
-    console.log('Setting up enhanced socket.io server...');
+export async function GET(req: NextRequest) {
+  // Type assertion to access socket server
+  const res = req as any;
+  
+  if (!res.socket?.server?.io) {
+    console.log('Setting up socket.io server...');
     
-    // Create a new HTTP server for Socket.io
-    const httpServer = new NetServer();
-    
-    io = new ServerIO(httpServer, {
-      cors: {
-        origin: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-        methods: ["GET", "POST"],
-        credentials: true
-      },
+    const httpServer: NetServer = res.socket.server as any;
+    const io = new ServerIO(httpServer, {
       path: '/api/socket',
       addTrailingSlash: false,
+      cors: {
+        origin: isProduction ? [
+          process.env.NEXT_PUBLIC_SITE_URL,
+          process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+          // Add your production domains here
+          "https://your-app.vercel.app"
+        ].filter(Boolean) : [
+          process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+          "http://localhost:3000",
+          "http://127.0.0.1:3000",
+          "*"
+        ],
+        methods: ["GET", "POST", "OPTIONS"],
+        credentials: true,
+      },
       transports: ['websocket', 'polling'],
-      pingTimeout: 60000,
-      pingInterval: 25000,
+      pingTimeout: isProduction ? 30000 : 60000,
+      pingInterval: isProduction ? 15000 : 25000,
     });
+
+    // Store the io instance on the server
+    res.socket.server.io = io;
 
     // Middleware for authentication - simplified for now
     io.use(async (socket, next) => {
@@ -50,15 +58,23 @@ export async function GET() {
       }
     });
 
+    // Store typing states
+    const typingUsers = new Map();
+    const userSockets = new Map();
+
     io.on('connection', (socket) => {
-      console.log(`Client connected: ${socket.id}`);
+      if (isProduction) {
+        console.log(`Client connected: ${socket.id}`);
+      }
 
       // Join user's personal room for notifications
       socket.on('set-user-id', (userId: string) => {
         socket.data.userId = userId;
         userSockets.set(userId, socket.id);
         socket.join(`user:${userId}`);
-        console.log(`User ${userId} connected`);
+        if (isProduction) {
+          console.log(`User ${userId} connected`);
+        }
       });
 
       // Join a conversation room
@@ -66,7 +82,7 @@ export async function GET() {
         try {
           const userId = socket.data.userId;
           if (!userId) {
-            socket.emit('error', { message: 'User not authenticated' });
+            socket.emit('join-conversation-error', { message: 'User not authenticated' });
             return;
           }
 
@@ -81,12 +97,17 @@ export async function GET() {
           });
 
           if (!participant) {
-            socket.emit('error', { message: 'Not authorized to join this conversation' });
+            socket.emit('join-conversation-error', { message: 'Not authorized to join this conversation' });
             return;
           }
 
           socket.join(conversationId);
-          console.log(`User ${userId} joined conversation: ${conversationId}`);
+          if (isProduction) {
+            console.log(`User ${userId} joined conversation: ${conversationId}`);
+          }
+          
+          // Emit success confirmation
+          socket.emit('conversation-joined', { conversationId, userId });
           
           // Notify other participants
           socket.to(conversationId).emit('user-joined', {
@@ -96,7 +117,7 @@ export async function GET() {
           });
         } catch (error) {
           console.error('Error joining conversation:', error);
-          socket.emit('error', { message: 'Failed to join conversation' });
+          socket.emit('join-conversation-error', { message: 'Failed to join conversation' });
         }
       });
 
@@ -113,7 +134,9 @@ export async function GET() {
           }
         }
         
-        console.log(`User ${userId} left conversation: ${conversationId}`);
+        if (isProduction) {
+          console.log(`User ${userId} left conversation: ${conversationId}`);
+        }
         
         // Notify other participants
         socket.to(conversationId).emit('user-left', {
@@ -385,7 +408,9 @@ export async function GET() {
 
       socket.on('disconnect', () => {
         const userId = socket.data.userId;
-        console.log(`Client disconnected: ${socket.id} (User: ${userId})`);
+        if (isProduction) {
+          console.log(`Client disconnected: ${socket.id} (User: ${userId})`);
+        }
         
         // Remove user from typing indicators
         typingUsers.forEach((users, conversationId) => {
@@ -405,7 +430,9 @@ export async function GET() {
     // Start the server
     const PORT = process.env.SOCKET_PORT || 8080;
     httpServer.listen(PORT, () => {
-      console.log(`Enhanced Socket.io server running on port ${PORT}`);
+      if (isProduction) {
+        console.log(`Enhanced Socket.io server running on port ${PORT}`);
+      }
     });
   }
 

@@ -21,12 +21,22 @@ const getNetworkIP = () => {
 };
 
 const networkIP = getNetworkIP();
+const isProduction = process.env.NODE_ENV === 'production';
 console.log(`Network IP: ${networkIP}`);
+console.log(`Environment: ${process.env.NODE_ENV}`);
 
 // Create Socket.IO server
 const io = new Server(httpServer, {
   cors: {
-    origin: [
+    origin: isProduction ? [
+      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.FRONTEND_URL,
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+      process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}` : null,
+      // Allow specific production domains
+      "https://your-app.vercel.app",
+      "https://your-app.netlify.app"
+    ].filter(Boolean) : [
       "http://localhost:3000",
       "http://127.0.0.1:3000",
       `http://${networkIP}:3000`,
@@ -37,7 +47,7 @@ const io = new Server(httpServer, {
       process.env.FRONTEND_URL,
       process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
       process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}` : null,
-      // Allow all origins for development (remove in production)
+      // Allow all origins for development
       "*"
     ].filter(Boolean),
     methods: ["GET", "POST", "OPTIONS"],
@@ -47,8 +57,8 @@ const io = new Server(httpServer, {
   path: '/api/socket',
   addTrailingSlash: false,
   transports: ['websocket', 'polling'],
-  pingTimeout: 60000,
-  pingInterval: 25000,
+  pingTimeout: isProduction ? 30000 : 60000,
+  pingInterval: isProduction ? 15000 : 25000,
   allowEIO3: true
 });
 
@@ -60,7 +70,9 @@ const userSockets = new Map();
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth.token;
-    console.log(`Auth attempt for socket ${socket.id}, token: ${token ? 'present' : 'missing'}`);
+    if (isProduction) {
+      console.log(`Auth attempt for socket ${socket.id}, token: ${token ? 'present' : 'missing'}`);
+    }
     
     if (!token) {
       console.error(`No token provided for socket: ${socket.id}`);
@@ -69,7 +81,9 @@ io.use(async (socket, next) => {
     
     // For now, we'll trust the token and get user ID from client
     // In production, you'd verify the token here
-    console.log(`Authentication successful for socket: ${socket.id}`);
+    if (isProduction) {
+      console.log(`Authentication successful for socket: ${socket.id}`);
+    }
     next();
   } catch (error) {
     console.error(`Authentication failed for socket ${socket.id}:`, error);
@@ -82,7 +96,9 @@ io.on('connection', (socket) => {
 
   // Join user's personal room for notifications
   socket.on('set-user-id', (userId) => {
-    console.log(`Setting user ID: ${userId} for socket: ${socket.id}`);
+    if (isProduction) {
+      console.log(`Setting user ID: ${userId} for socket: ${socket.id}`);
+    }
     if (!userId) {
       console.error('No userId provided for socket:', socket.id);
       socket.emit('error', { message: 'User ID is required' });
@@ -92,7 +108,9 @@ io.on('connection', (socket) => {
     // Check if user already has a socket connection
     const existingSocketId = userSockets.get(userId);
     if (existingSocketId && io.sockets.sockets.has(existingSocketId)) {
-      console.log(`User ${userId} already has an active connection. Disconnecting old socket: ${existingSocketId}`);
+      if (isProduction) {
+        console.log(`User ${userId} already has an active connection. Disconnecting old socket: ${existingSocketId}`);
+      }
       const existingSocket = io.sockets.sockets.get(existingSocketId);
       if (existingSocket) {
         existingSocket.disconnect(true);
@@ -102,7 +120,9 @@ io.on('connection', (socket) => {
     socket.data.userId = userId;
     userSockets.set(userId, socket.id);
     socket.join(`user:${userId}`);
-    console.log(`User ${userId} connected successfully with socket: ${socket.id}`);
+    if (isProduction) {
+      console.log(`User ${userId} connected successfully with socket: ${socket.id}`);
+    }
     
     // Emit success confirmation to client
     socket.emit('user-id-set', { userId, socketId: socket.id });
@@ -112,17 +132,19 @@ io.on('connection', (socket) => {
   socket.on('join-conversation', async (conversationId) => {
     try {
       const userId = socket.data.userId;
-      console.log(`Join conversation request: conversationId=${conversationId}, userId=${userId}`);
+      if (isProduction) {
+        console.log(`Join conversation request: conversationId=${conversationId}, userId=${userId}`);
+      }
       
       if (!userId) {
         console.error('No userId found for socket:', socket.id);
-        socket.emit('error', { message: 'User not authenticated' });
+        socket.emit('join-conversation-error', { message: 'User not authenticated' });
         return;
       }
 
       if (!conversationId) {
         console.error('No conversationId provided');
-        socket.emit('error', { message: 'No conversation ID provided' });
+        socket.emit('join-conversation-error', { message: 'No conversation ID provided' });
         return;
       }
 
@@ -138,12 +160,17 @@ io.on('connection', (socket) => {
 
       if (!participant) {
         console.error(`User ${userId} not authorized to join conversation ${conversationId}`);
-        socket.emit('error', { message: 'Not authorized to join this conversation' });
+        socket.emit('join-conversation-error', { message: 'Not authorized to join this conversation' });
         return;
       }
 
       socket.join(conversationId);
-      console.log(`User ${userId} joined conversation: ${conversationId}`);
+      if (isProduction) {
+        console.log(`User ${userId} joined conversation: ${conversationId}`);
+      }
+      
+      // Emit success confirmation
+      socket.emit('conversation-joined', { conversationId, userId });
       
       // Notify other participants
       socket.to(conversationId).emit('user-joined', {
@@ -153,7 +180,7 @@ io.on('connection', (socket) => {
       });
     } catch (error) {
       console.error('Error joining conversation:', error);
-      socket.emit('error', { message: 'Failed to join conversation' });
+      socket.emit('join-conversation-error', { message: 'Failed to join conversation' });
     }
   });
 
@@ -485,14 +512,18 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || process.env.SOCKET_PORT || 8080;
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`Socket.io server running on port ${PORT}`);
-  console.log(`Local access: http://localhost:${PORT}`);
-  console.log(`Network access: http://${networkIP}:${PORT}`);
-  console.log(`For mobile devices, use: http://${networkIP}:3000 (Next.js app)`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
+const PORT = process.env.PORT || 8080;
+const SOCKET_PORT = process.env.SOCKET_PORT || 8080;
+
+httpServer.listen(SOCKET_PORT, () => {
+  console.log(`🚀 Socket server running on port ${SOCKET_PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  if (isProduction) {
+    console.log(`🔒 Production mode enabled`);
+    console.log(`📊 CORS origins: ${io.engine.opts.cors.origin.join(', ')}`);
+  } else {
+    console.log(`🔧 Development mode enabled`);
+  }
 });
 
 // Graceful shutdown

@@ -79,24 +79,48 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const token = await getAuthToken();
         if (!token) {
           console.error('No auth token available');
+          toast.error('Authentication required. Please sign in again.');
           return;
         }
 
         console.log('Initializing socket connection with user ID:', currentUserId);
-        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 
-                         (process.env.NEXT_PUBLIC_NETWORK_IP ? 
-                          `http://${process.env.NEXT_PUBLIC_NETWORK_IP}:8080` : 
-                          'http://localhost:8080');
+        
+        // Determine socket URL based on environment
+        let socketUrl;
+        if (process.env.NEXT_PUBLIC_SOCKET_URL) {
+          socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+        } else if (typeof window !== 'undefined') {
+          // In browser, use the same host as the current page
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const host = window.location.host;
+          socketUrl = `${protocol}//${host}`;
+        } else if (process.env.NODE_ENV === 'production') {
+          // Production fallback - use the same host as the app
+          socketUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-app.vercel.app';
+        } else {
+          // Development fallback
+          socketUrl = process.env.NEXT_PUBLIC_NETWORK_IP ? 
+            `http://${process.env.NEXT_PUBLIC_NETWORK_IP}:8080` : 
+            'http://localhost:8080';
+        }
         
         console.log('Connecting to socket URL:', socketUrl);
+        if (process.env.NODE_ENV === 'production') {
+          console.log('Production mode: Using optimized socket configuration');
+        }
+        
         const socketInstance = io(socketUrl, {
           path: '/api/socket',
           addTrailingSlash: false,
           transports: ['websocket', 'polling'],
-          timeout: 20000,
+          timeout: process.env.NODE_ENV === 'production' ? 15000 : 20000,
           auth: {
             token,
           },
+          reconnection: true,
+          reconnectionAttempts: process.env.NODE_ENV === 'production' ? 3 : 5,
+          reconnectionDelay: process.env.NODE_ENV === 'production' ? 2000 : 1000,
+          reconnectionDelayMax: process.env.NODE_ENV === 'production' ? 10000 : 5000,
         });
 
         socketInstance.on('connect', () => {
@@ -117,16 +141,50 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           console.log('Disconnected from chat server, reason:', reason);
           setIsConnected(false);
           setIsUserIdSet(false);
+          
+          if (reason === 'io server disconnect') {
+            // Server disconnected us, try to reconnect
+            socketInstance.connect();
+          }
         });
 
         socketInstance.on('connect_error', (error) => {
           console.error('Socket connection error:', error);
-          toast.error('Failed to connect to chat server. Please refresh the page.');
+          setIsConnected(false);
+          setIsUserIdSet(false);
+          
+          // More specific error messages
+          if (error.message.includes('CORS')) {
+            toast.error('Chat server connection blocked. Please check your network settings.');
+          } else if (error.message.includes('timeout')) {
+            toast.error('Chat server connection timeout. Please try again.');
+          } else {
+            toast.error('Failed to connect to chat server. Please refresh the page.');
+          }
         });
 
         socketInstance.on('error', (error) => {
           console.error('Socket error:', error);
-          toast.error(error.message || 'Connection error. Please refresh the page.');
+          const errorMessage = error.message || 'Connection error. Please refresh the page.';
+          toast.error(errorMessage);
+        });
+
+        // Handle join conversation errors specifically
+        socketInstance.on('join-conversation-error', (data) => {
+          console.error('Failed to join conversation:', data);
+          if (process.env.NODE_ENV === 'production') {
+            // In production, show more specific error messages
+            toast.error(data.message || 'Unable to join conversation. Please try again.');
+          } else {
+            toast.error(data.message || 'Failed to join conversation');
+          }
+        });
+
+        socketInstance.on('conversation-joined', (data) => {
+          console.log('Successfully joined conversation:', data);
+          if (process.env.NODE_ENV === 'production') {
+            console.log('Production: Conversation joined successfully');
+          }
         });
 
         socketInstance.on('user-typing', (data) => {
@@ -204,12 +262,26 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, [socket]);
 
   const joinConversation = useCallback((conversationId: string) => {
-    if (socket && isUserIdSet) {
-      console.log('Joining conversation:', conversationId);
-      socket.emit('join-conversation', conversationId);
-    } else {
-      console.warn('Cannot join conversation: socket not ready', { socket: !!socket, isUserIdSet });
+    if (!socket) {
+      console.warn('Cannot join conversation: socket not available');
+      toast.error('Chat connection not available. Please refresh the page.');
+      return;
     }
+    
+    if (!isUserIdSet) {
+      console.warn('Cannot join conversation: user ID not set');
+      toast.error('Please wait for chat connection to be established.');
+      return;
+    }
+    
+    if (!conversationId) {
+      console.warn('Cannot join conversation: no conversation ID provided');
+      toast.error('Invalid conversation. Please try again.');
+      return;
+    }
+    
+    console.log('Joining conversation:', conversationId);
+    socket.emit('join-conversation', conversationId);
   }, [socket, isUserIdSet]);
 
   const leaveConversation = useCallback((conversationId: string) => {
