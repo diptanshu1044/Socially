@@ -1,189 +1,87 @@
 "use client";
 
-import { SignedIn, SignedOut, useClerk } from "@clerk/nextjs";
+import  ModeToggle  from "@/components/ModeToggle";
 import { UserButton } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import ModeToggle from "@/components/ModeToggle";
-import { Button } from "@/components/ui/button";
+import { Button } from "./ui/button";
+import { Bell, MessageCircle, Home } from "lucide-react";
 import Link from "next/link";
-import { AlignJustify, Bell, House, User } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { useTheme } from "next-themes";
-import { useState, useEffect } from "react";
-import {
-  Sheet,
-  SheetTitle,
-  SheetContent,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
-import { getCurrentUser } from "@/actions/user.action";
-import { buttonVariants } from "@/components/ui/button";
+import { useChat } from "./ChatProvider";
+import { useEffect, useState } from "react";
 
-type ButtonVariant = Parameters<typeof buttonVariants>[number]["variant"];
-
-type User = Awaited<ReturnType<typeof getCurrentUser>>;
-
-export const Navbar = () => {
-  const { signOut } = useClerk();
-  const router = useRouter();
-  const { theme } = useTheme();
-  const [user, setUser] = useState<User>(null);
-
-  const [signInVariant, setSignInVariant] = useState<ButtonVariant>("default");
-  const [signUpVariant, setSignUpVariant] =
-    useState<ButtonVariant>("secondary");
-  const [signOutVariant, setSignOutVariant] =
-    useState<ButtonVariant>("default");
+export function Navbar() {
+  const { isConnected } = useChat();
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(0);
 
   useEffect(() => {
-    const findUser = async () => {
+    const fetchCounts = async () => {
       try {
-        const usr = await getCurrentUser();
-        setUser(usr);
-      } catch (e) {
-        console.log(e);
+        // Fetch unread notifications
+        const notificationsResponse = await fetch('/api/notifications');
+        const notificationsData = await notificationsResponse.json();
+        const unreadNotifications = notificationsData.notifications?.filter((n: any) => !n.read).length || 0;
+        setNotificationCount(unreadNotifications);
+
+        // Fetch conversations for message count
+        const conversationsResponse = await fetch('/api/conversations');
+        const conversationsData = await conversationsResponse.json();
+        setMessageCount(conversationsData.conversations?.length || 0);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
       }
     };
 
-    findUser();
+    fetchCounts();
+    
+    // Poll for updates every 30 seconds
+    const interval = setInterval(fetchCounts, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    setSignInVariant(theme === "dark" ? "secondary" : "default");
-    setSignUpVariant(theme === "dark" ? "default" : "secondary");
-    setSignOutVariant(theme === "dark" ? "secondary" : "default");
-  }, [theme]);
-
   return (
-    <>
-      <div className="flex justify-evenly gap-20 md:gap-48 lg:gap-96 w-full h-20 px-4 py-2 sticky top-0 z-50 backdrop-blur-xl">
-        <div className="flex justify-center items-center">
-          <Link
-            href="/"
-            className="font-mono text-xl tablet:text-2xl font-semibold"
-          >
-            Socially
-          </Link>
-        </div>
-        <div className="hidden tablet:flex justify-evenly items-center gap-12">
-          <ModeToggle />
-          <Link href="/">
-            <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
-              <House />
-              <h2>Home</h2>
-            </div>
-          </Link>
-          {user && (
-            <SignedIn>
-              <Link href="/notifications">
-                <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
-                  <Bell />
-                  <h2>Notifications</h2>
-                </div>
-              </Link>
-              <Link href={`/profile/${user.username}`}>
-                <div className="flex gap-2 items-center justify-center hover:cursor-pointer">
-                  <User />
-                  <h2>Profile</h2>
-                </div>
-              </Link>
-            </SignedIn>
-          )}
-          <SignedIn>
-            <div className="flex gap-4 justify-center items-center">
-              <UserButton />
-              <Button variant={signOutVariant} onClick={() => signOut()}>
-                Sign Out
+    <nav className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <h1 className="text-xl font-bold">Socially</h1>
+            </Link>
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                <Home className="w-4 h-4" />
               </Button>
-            </div>
-          </SignedIn>
-          <SignedOut>
-            <div className="flex gap-4">
-              <Button
-                variant={signInVariant}
-                onClick={() => router.push("/signin")}
-              >
-                Sign In
-              </Button>
+            </Link>
+          </div>
 
-              <Button
-                variant={signUpVariant}
-                onClick={() => router.push("/signup")}
-              >
-                Sign Up
+          <div className="flex items-center space-x-4">
+            <Link href="/chat">
+              <Button variant="ghost" size="sm" className="relative">
+                <MessageCircle className="w-4 h-4" />
+                {messageCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {messageCount > 9 ? '9+' : messageCount}
+                  </span>
+                )}
               </Button>
-            </div>
-          </SignedOut>
-        </div>
-        <div className="flex tablet:hidden justify-center items-center gap-10">
-          <ModeToggle />
-          <Sheet>
-            <SheetTrigger>
-              <AlignJustify />
-            </SheetTrigger>
-            <SheetContent className="w-72 py-2">
-              <SheetTitle className="text-center flex justify-center items-center text-lg">
-                Menu
-              </SheetTitle>
-              <Separator />
-              <SheetClose asChild>
-                <Link href="/">
-                  <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
-                    <House />
-                    <h2>Home</h2>
-                  </div>
-                </Link>
-              </SheetClose>
-              {user && (
-                <SignedIn>
-                  <SheetClose asChild>
-                    <Link href="/notifications">
-                      <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
-                        <Bell />
-                        <h2>Notifications</h2>
-                      </div>
-                    </Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link href={`/profile/${user?.username}`}>
-                      <div className="flex gap-2 items-center px-4 py-1 hover:cursor-pointer">
-                        <User />
-                        <h2>Profile</h2>
-                      </div>
-                    </Link>
-                  </SheetClose>
-                </SignedIn>
-              )}
-              <SignedIn>
-                <div className="flex gap-4 justify-center items-center">
-                  <UserButton />
-                  <Button variant={signOutVariant} onClick={() => signOut()}>
-                    Sign Out
-                  </Button>
-                </div>
-              </SignedIn>
-              <SignedOut>
-                <div className="flex gap-4 items-center px-4 justify-center">
-                  <Button
-                    variant={signInVariant}
-                    onClick={() => router.push("/signin")}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    variant={signUpVariant}
-                    onClick={() => router.push("/signup")}
-                  >
-                    Sign Up
-                  </Button>
-                </div>
-              </SignedOut>
-            </SheetContent>
-          </Sheet>
+            </Link>
+            
+            <Link href="/notifications">
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="w-4 h-4" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+
+            <ModeToggle />
+            <UserButton />
+          </div>
         </div>
       </div>
-      <Separator />
-    </>
+    </nav>
   );
-};
+}

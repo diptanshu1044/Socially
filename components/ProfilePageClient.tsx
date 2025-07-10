@@ -28,9 +28,11 @@ import {
   HeartIcon,
   LinkIcon,
   MapPinIcon,
+  MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 function ProfilePageClient({
   isUserFollowing: initialIsFollowing,
@@ -145,14 +147,22 @@ function ProfilePageClient({
                     Edit Profile
                   </Button>
                 ) : (
-                  <Button
-                    className="w-full mt-4"
-                    onClick={handleFollow}
-                    disabled={isUpdatingFollow}
-                    variant={isFollowing ? "outline" : "default"}
-                  >
-                    {isFollowing ? "Unfollow" : "Follow"}
-                  </Button>
+                  <div className="w-full mt-4 space-y-2">
+                    <Button
+                      className="w-full"
+                      onClick={handleFollow}
+                      disabled={isUpdatingFollow}
+                      variant={isFollowing ? "outline" : "default"}
+                    >
+                      {isFollowing ? "Unfollow" : "Follow"}
+                    </Button>
+                    <Link href={`/chat?user=${user.id}`}>
+                      <Button className="w-full" variant="outline">
+                        <MessageCircle className="size-4 mr-2" />
+                        Message
+                      </Button>
+                    </Link>
+                  </div>
                 )}
 
                 {/* LOCATION & WEBSITE */}

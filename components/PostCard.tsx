@@ -15,6 +15,8 @@ import { LikePostButton } from "./LikePostButton";
 import { FormatTimeAgo } from "./FormatTimeAgo";
 import { CommentButton } from "./CommentButton";
 import { CommentSection } from "./CommentSection";
+import { Button } from "./ui/button";
+import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 
 export interface PostCardProps {
@@ -53,7 +55,16 @@ export const PostCard = ({ post, dbUserId }: PostCardProps) => {
             <TextComponent content={post.content} />
           </div>
         </div>
-        {dbUserId === post.authorId && <DeletePostButton postId={post.id} />}
+        <div className="flex items-center gap-2">
+          {dbUserId !== post.authorId && (
+            <Link href={`/chat?user=${post.authorId}`}>
+              <Button size="sm" variant="outline">
+                <MessageCircle className="w-4 h-4" />
+              </Button>
+            </Link>
+          )}
+          {dbUserId === post.authorId && <DeletePostButton postId={post.id} />}
+        </div>
       </CardHeader>
       {post.image && (
         <CardContent className="flex justify-center items-center">
