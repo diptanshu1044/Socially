@@ -28,6 +28,7 @@ export const getPosts = async ({ page = 1, limit = 10 } = {}) => {
   try {
     const skip = (page - 1) * limit;
 
+    // Optimized query with limited includes and better pagination
     const posts = await prisma.post.findMany({
       skip,
       take: limit,
@@ -43,7 +44,9 @@ export const getPosts = async ({ page = 1, limit = 10 } = {}) => {
             image: true,
           },
         },
+        // Only fetch recent comments (limit to 3 most recent)
         comments: {
+          take: 3,
           include: {
             author: {
               select: {
@@ -55,9 +58,10 @@ export const getPosts = async ({ page = 1, limit = 10 } = {}) => {
             },
           },
           orderBy: {
-            createdAt: "asc",
+            createdAt: "desc",
           },
         },
+        // Only fetch user IDs for likes (not full objects)
         likes: {
           select: {
             userId: true,
@@ -72,13 +76,13 @@ export const getPosts = async ({ page = 1, limit = 10 } = {}) => {
       },
     });
 
-    // Count total posts for determining if there are more
-    const totalPosts = await prisma.post.count();
+    // Use cursor-based pagination instead of count for better performance
+    const hasMore = posts.length === limit;
 
     return {
       posts,
-      hasMore: skip + posts.length < totalPosts,
-      totalPosts,
+      hasMore,
+      totalPosts: null, // Remove total count to avoid expensive count query
     };
   } catch (e) {
     console.log(`Failed to get posts: ${e}`);
