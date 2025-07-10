@@ -1,11 +1,36 @@
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { PrismaClient } = require('../node_modules/@prisma/client');
+const prismaService = require('./prisma');
 
-const prisma = new PrismaClient();
+const prisma = prismaService.getClient();
 
 // Create HTTP server
 const httpServer = createServer();
+
+// Health check endpoint
+httpServer.on('request', async (req, res) => {
+  if (req.url === '/health' && req.method === 'GET') {
+    try {
+      const isHealthy = await prismaService.healthCheck();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        status: 'ok', 
+        database: isHealthy ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        status: 'error', 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
 
 // Get network configuration
 const getNetworkIP = () => {
@@ -24,6 +49,26 @@ const networkIP = getNetworkIP();
 const isProduction = process.env.NODE_ENV === 'production';
 console.log(`Network IP: ${networkIP}`);
 console.log(`Environment: ${process.env.NODE_ENV}`);
+
+// Verify database connection on startup
+async function verifyDatabaseConnection() {
+  try {
+    console.log('🔍 Verifying database connection...');
+    const isHealthy = await prismaService.healthCheck();
+    if (isHealthy) {
+      console.log('✅ Database connection verified successfully');
+    } else {
+      console.error('❌ Database connection failed');
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('❌ Database connection error:', error.message);
+    process.exit(1);
+  }
+}
+
+// Verify database connection before starting the server
+verifyDatabaseConnection();
 
 // Create Socket.IO server
 const io = new Server(httpServer, {

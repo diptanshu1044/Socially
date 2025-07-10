@@ -6,10 +6,21 @@
   "scripts": {
     "start": "node socket-server.js",
     "dev": "node --watch socket-server.js",
-    "build": "echo 'No build step required'"
+    "dev:debug": "node --inspect --watch socket-server.js",
+    "build": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "health": "node -e \"require('./prisma').healthCheck().then(console.log)\"",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.5.0",
     "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.5.0"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -1,0 +1,198 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  clerkId   String   @unique
+  email     String   @unique
+  username  String   @unique
+  password  String?
+  name      String?
+  bio       String?
+  image     String?
+  location  String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relations
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
+
+  followers Follow[] @relation("follower") // Users following the user
+  following Follow[] @relation("following") // Users the user is following
+
+  notifications        Notification[] @relation("notifications") // Notifications received
+  notificationsCreated Notification[] @relation("notificationsCreator") // Notifications created/triggered by the user
+
+  // Chat relations
+  conversationParticipants ConversationParticipant[]
+  messages                Message[]
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relations
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade) // Delete all posts by a user when the user is deleted
+  authorId String
+
+  comments      Comment[]
+  likes         Like[]
+  notifications Notification[]
+
+  @@index([createdAt]) // Index for ordering posts by creation date
+  @@index([authorId, createdAt]) // Composite index for user's posts
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relations
+  authorId     String
+  author       User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId       String
+  post         Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  Notification Notification[]
+
+  @@index([authorId, postId]) // Composite index: faster queries
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  //Relations
+  post         Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Notification Notification[]
+
+  @@unique([postId, userId]) // Prevent duplicate likes
+  @@index([postId, userId]) // Composite index: faster queries
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  //Relations
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId]) // Composite primary key
+  @@index([followerId, followingId]) // Composite index: faster queries
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  creatorId String
+  type      NotificationType
+  read      Boolean          @default(false)
+  postId    String?
+  commentId String?
+  likeId    String?
+  createdAt DateTime         @default(now())
+
+  //Relations
+  user    User     @relation("notifications", fields: [userId], references: [id], onDelete: Cascade)
+  creator User     @relation("notificationsCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  like    Like?    @relation(fields: [likeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read]) // Faster queries for fetching unread notifications
+  @@index([userId, createdAt]) // Index for ordering notifications by date
+  @@index([creatorId, createdAt]) // Index for notifications created by user
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  MENTION
+}
+
+// Chat Models
+model Conversation {
+  id        String   @id @default(uuid())
+  name      String?  // For group chats
+  isGroup   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([updatedAt]) // For sorting conversations by last activity
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  userId         String
+  role           ParticipantRole @default(MEMBER)
+  joinedAt       DateTime     @default(now())
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId, conversationId])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  content        String
+  messageType    MessageType @default(TEXT)
+  conversationId String
+  senderId       String
+  isEdited       Boolean  @default(false)
+  isDeleted      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt]) // For ordering messages
+  @@index([senderId, createdAt]) // For user's message history
+}
+
+enum ParticipantRole {
+  ADMIN
+  MEMBER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+} 
