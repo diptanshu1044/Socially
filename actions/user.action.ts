@@ -60,11 +60,29 @@ export const getUser = async (clerkId: string | null): Promise<User> => {
 };
 
 export const getDbUserId = async (): Promise<string | null> => {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) return null;
-  const user = await getUser(clerkId);
-  if (!user) return null;
-  return user.id;
+  try {
+    const { userId: clerkId } = await auth();
+    console.log('🔍 Debug - getDbUserId - Clerk ID:', clerkId);
+    
+    if (!clerkId) {
+      console.log('❌ Debug - getDbUserId - No Clerk ID found');
+      return null;
+    }
+    
+    const user = await getUser(clerkId);
+    console.log('🔍 Debug - getDbUserId - Database user found:', !!user);
+    
+    if (!user) {
+      console.log('❌ Debug - getDbUserId - No database user found for Clerk ID:', clerkId);
+      return null;
+    }
+    
+    console.log('✅ Debug - getDbUserId - Success, returning user ID:', user.id);
+    return user.id;
+  } catch (error) {
+    console.error('❌ Debug - getDbUserId - Error:', error);
+    return null;
+  }
 };
 
 export const getRandomUsers = async () => {
