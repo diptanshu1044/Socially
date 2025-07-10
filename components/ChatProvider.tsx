@@ -32,6 +32,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [typingUsers, setTypingUsers] = useState<Map<string, Set<string>>>(new Map());
   const [messageStatus, setMessageStatus] = useState<Map<string, 'sending' | 'sent' | 'delivered' | 'read'>>(new Map());
+  const [isUserIdSet, setIsUserIdSet] = useState(false);
   const { user } = useUser();
   const { getToken } = useAuth();
 
@@ -46,27 +47,34 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [getToken]);
 
+  // Fetch current user ID first
   useEffect(() => {
-    // Get the current user's database ID via API call
     const fetchCurrentUserId = async () => {
       try {
         const response = await fetch('/api/users/me');
         if (response.ok) {
           const data = await response.json();
+          console.log('Fetched current user ID:', data.userId);
           setCurrentUserId(data.userId);
+        } else {
+          console.error('Failed to fetch user ID, response:', response.status);
         }
       } catch (error) {
         console.error('Error fetching current user ID:', error);
       }
     };
 
-    if (user) {
+    if (user && !currentUserId) {
       fetchCurrentUserId();
     }
-  }, [user]);
+  }, [user, currentUserId]);
 
+  // Initialize socket connection only after we have user ID
   useEffect(() => {
-    // Initialize socket connection with authentication
+    if (!user || !currentUserId || socket) {
+      return;
+    }
+
     const initializeSocket = async () => {
       try {
         const token = await getAuthToken();
@@ -75,33 +83,51 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const socketInstance = io('http://localhost:3001', {
+        console.log('Initializing socket connection with user ID:', currentUserId);
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 
+                         (process.env.NEXT_PUBLIC_NETWORK_IP ? 
+                          `http://${process.env.NEXT_PUBLIC_NETWORK_IP}:8080` : 
+                          'http://localhost:8080');
+        
+        console.log('Connecting to socket URL:', socketUrl);
+        const socketInstance = io(socketUrl, {
           path: '/api/socket',
           addTrailingSlash: false,
           transports: ['websocket', 'polling'],
+          timeout: 20000,
           auth: {
             token,
           },
         });
 
         socketInstance.on('connect', () => {
-          console.log('Connected to chat server');
+          console.log('Connected to chat server, socket ID:', socketInstance.id);
           setIsConnected(true);
           
-          // Send user ID to socket server after connection
-          if (currentUserId) {
-            socketInstance.emit('set-user-id', currentUserId);
-          }
+          // Send user ID immediately after connection
+          console.log('Sending user ID to socket:', currentUserId);
+          socketInstance.emit('set-user-id', currentUserId);
         });
 
-        socketInstance.on('disconnect', () => {
-          console.log('Disconnected from chat server');
+        socketInstance.on('user-id-set', (data) => {
+          console.log('User ID set confirmation received:', data);
+          setIsUserIdSet(true);
+        });
+
+        socketInstance.on('disconnect', (reason) => {
+          console.log('Disconnected from chat server, reason:', reason);
           setIsConnected(false);
+          setIsUserIdSet(false);
+        });
+
+        socketInstance.on('connect_error', (error) => {
+          console.error('Socket connection error:', error);
+          toast.error('Failed to connect to chat server. Please refresh the page.');
         });
 
         socketInstance.on('error', (error) => {
           console.error('Socket error:', error);
-          toast.error('Connection error. Please refresh the page.');
+          toast.error(error.message || 'Connection error. Please refresh the page.');
         });
 
         socketInstance.on('user-typing', (data) => {
@@ -144,57 +170,58 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         });
 
         socketInstance.on('message-edited', (data) => {
-          // Handle message editing in UI
           console.log('Message edited:', data);
         });
 
         socketInstance.on('message-deleted', (data) => {
-          // Handle message deletion in UI
           console.log('Message deleted:', data);
         });
 
         setSocket(socketInstance);
-
-        return () => {
-          socketInstance.disconnect();
-        };
       } catch (error) {
         console.error('Error initializing socket:', error);
+        toast.error('Failed to initialize chat connection');
       }
     };
 
-    if (user) {
-      initializeSocket();
-    }
+    initializeSocket();
 
     return () => {
+      // Cleanup will be handled by the main cleanup effect
+    };
+  }, [user, currentUserId, getAuthToken]);
+
+  // Cleanup socket on unmount
+  useEffect(() => {
+    return () => {
       if (socket) {
+        console.log('Disconnecting socket on unmount');
         socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+        setIsUserIdSet(false);
       }
     };
-  }, [user, getAuthToken, currentUserId]);
-
-  // Send user ID to socket when it becomes available
-  useEffect(() => {
-    if (socket && isConnected && currentUserId) {
-      socket.emit('set-user-id', currentUserId);
-    }
-  }, [socket, isConnected, currentUserId]);
+  }, [socket]);
 
   const joinConversation = useCallback((conversationId: string) => {
-    if (socket) {
+    if (socket && isUserIdSet) {
+      console.log('Joining conversation:', conversationId);
       socket.emit('join-conversation', conversationId);
+    } else {
+      console.warn('Cannot join conversation: socket not ready', { socket: !!socket, isUserIdSet });
     }
-  }, [socket]);
+  }, [socket, isUserIdSet]);
 
   const leaveConversation = useCallback((conversationId: string) => {
-    if (socket) {
+    if (socket && isUserIdSet) {
       socket.emit('leave-conversation', conversationId);
     }
-  }, [socket]);
+  }, [socket, isUserIdSet]);
 
   const sendMessage = useCallback((conversationId: string, message: string, messageType: string = 'TEXT') => {
-    if (socket && currentUserId) {
+    if (socket && currentUserId && isUserIdSet) {
+      console.log('ChatProvider sending message:', { conversationId, message, messageType, currentUserId });
       const messageId = Date.now().toString();
       setMessageStatus(prev => {
         const newMap = new Map(prev);
@@ -207,43 +234,46 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         message,
         messageType,
       });
+    } else {
+      console.log('Cannot send message:', { socket: !!socket, currentUserId, isUserIdSet, conversationId });
+      toast.error('Please wait for connection to be established');
     }
-  }, [socket, currentUserId]);
+  }, [socket, currentUserId, isUserIdSet]);
 
   const sendTypingIndicator = useCallback((conversationId: string, isTyping: boolean) => {
-    if (socket && currentUserId) {
-      socket.emit('typing', {
+    if (socket && currentUserId && isUserIdSet) {
+      socket.emit('typing-indicator', {
         conversationId,
         isTyping,
       });
     }
-  }, [socket, currentUserId]);
+  }, [socket, currentUserId, isUserIdSet]);
 
   const editMessage = useCallback((messageId: string, newContent: string) => {
-    if (socket) {
+    if (socket && isUserIdSet) {
       socket.emit('edit-message', {
         messageId,
         newContent,
       });
     }
-  }, [socket]);
+  }, [socket, isUserIdSet]);
 
   const deleteMessage = useCallback((messageId: string) => {
-    if (socket) {
+    if (socket && isUserIdSet) {
       socket.emit('delete-message', {
         messageId,
       });
     }
-  }, [socket]);
+  }, [socket, isUserIdSet]);
 
   const markMessagesAsRead = useCallback((conversationId: string, messageIds: string[]) => {
-    if (socket) {
+    if (socket && isUserIdSet) {
       socket.emit('mark-read', {
         conversationId,
         messageIds,
       });
     }
-  }, [socket]);
+  }, [socket, isUserIdSet]);
 
   const value: ChatContextType = {
     socket,

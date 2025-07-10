@@ -405,8 +405,9 @@ export async function GET(req: NextRequest) {
     });
 
     // Start the server
-    httpServer.listen(3001, () => {
-      console.log('Enhanced Socket.io server running on port 3001');
+    const PORT = process.env.SOCKET_PORT || 8080;
+    httpServer.listen(PORT, () => {
+      console.log(`Enhanced Socket.io server running on port ${PORT}`);
     });
   }
 

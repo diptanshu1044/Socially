@@ -86,6 +86,7 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
     if (!socket) return;
 
     socket.on('new-message', (data) => {
+      console.log('Received new message:', data);
       // Add new message to the list
       const newMessage: ChatMessage = {
         id: data.id,
@@ -97,6 +98,7 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
         isDeleted: false,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt),
+        sender: data.sender,
       };
       
       setMessages(prev => [...prev, newMessage]);
@@ -198,6 +200,7 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
     setIsTyping(false);
 
     try {
+      console.log('Sending message via socket:', messageContent, 'to conversation:', currentConversationId);
       // Send via socket for real-time
       sendSocketMessage(currentConversationId, messageContent);
     } catch (error) {
