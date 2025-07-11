@@ -19,6 +19,7 @@ interface Notification {
 export function Navbar() {
   const [notificationCount, setNotificationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -45,6 +46,10 @@ export function Navbar() {
     
     return () => clearInterval(interval);
   }, []);
+
+  const handleNavigation = () => {
+    setSheetOpen(false);
+  };
 
   return (
     <>
@@ -101,7 +106,7 @@ export function Navbar() {
           </Link>
           <div className="flex items-center space-x-2">
             <ModeToggle />
-            <Sheet>
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
                   <Menu className="w-5 h-5" />
@@ -113,11 +118,11 @@ export function Navbar() {
                     <h2 className="text-lg font-semibold">Menu</h2>
                   </div>
                   <div className="flex-1 p-4 space-y-4">
-                    <Link href="/" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <Link href="/" onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                       <Home className="w-5 h-5" />
                       <span>Home</span>
                     </Link>
-                    <Link href="/chat" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+                    <Link href="/chat" onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
                       <MessageCircle className="w-5 h-5" />
                       <span>Chat</span>
                       {messageCount > 0 && (
@@ -126,7 +131,7 @@ export function Navbar() {
                         </span>
                       )}
                     </Link>
-                    <Link href="/notifications" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+                    <Link href="/notifications" onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
                       <Bell className="w-5 h-5" />
                       <span>Notifications</span>
                       {notificationCount > 0 && (
