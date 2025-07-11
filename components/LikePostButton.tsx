@@ -45,11 +45,17 @@ export const LikePostButton = ({
     <Button
       variant="ghost"
       onClick={handleLike}
-      className={`text-muted-foreground gap-2 ${
-        hasLiked ? "text-red-500 hover:text-red-600" : "hover:text-red-500"
+      disabled={isLiking}
+      className={`gap-2 h-10 px-3 rounded-full transition-all duration-200 min-h-[40px] ${
+        hasLiked 
+          ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20" 
+          : "text-slate-600 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
       }`}
     >
-      <Heart fill={hasLiked ? "red" : ""} /> {optimisticLikes}
+      <Heart 
+        className={`w-4 h-4 lg:w-5 lg:h-5 ${hasLiked ? "fill-red-500" : ""}`} 
+      /> 
+      <span className="text-xs lg:text-sm font-medium">{optimisticLikes}</span>
     </Button>
   );
 };

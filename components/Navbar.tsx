@@ -3,9 +3,10 @@
 import  ModeToggle  from "@/components/ModeToggle";
 import { UserButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
-import { Bell, MessageCircle, Home } from "lucide-react";
+import { Bell, MessageCircle, Home, User, Search, Menu } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 interface Notification {
   id: string;
@@ -46,48 +47,142 @@ export function Navbar() {
   }, []);
 
   return (
-    <nav className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <h1 className="text-xl font-bold">Socially</h1>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost" size="sm">
-                <Home className="w-4 h-4" />
-              </Button>
-            </Link>
+    <>
+      {/* Desktop Navbar */}
+      <nav className="hidden lg:block border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-40">
+        <div className="container-mobile">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/">
+                <h1 className="text-xl font-bold">Socially</h1>
+              </Link>
+              <Link href="/">
+                <Button variant="ghost" size="sm">
+                  <Home className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Link href="/chat">
+                <Button variant="ghost" size="sm" className="relative">
+                  <MessageCircle className="w-4 h-4" />
+                  {messageCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {messageCount > 9 ? '9+' : messageCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+              
+              <Link href="/notifications">
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="w-4 h-4" />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {notificationCount > 9 ? '9+' : notificationCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+
+              <ModeToggle />
+              <UserButton />
+            </div>
           </div>
+        </div>
+      </nav>
 
-          <div className="flex items-center space-x-4">
-            <Link href="/chat">
-              <Button variant="ghost" size="sm" className="relative">
-                <MessageCircle className="w-4 h-4" />
-                {messageCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {messageCount > 9 ? '9+' : messageCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
-            
-            <Link href="/notifications">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-4 h-4" />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
-
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 safe-padding">
+        <div className="flex items-center justify-between h-14 px-4">
+          <Link href="/">
+            <h1 className="text-lg font-bold">Socially</h1>
+          </Link>
+          <div className="flex items-center space-x-2">
             <ModeToggle />
-            <UserButton />
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80 p-0">
+                <div className="flex flex-col h-full">
+                  <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-lg font-semibold">Menu</h2>
+                  </div>
+                  <div className="flex-1 p-4 space-y-4">
+                    <Link href="/" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <Home className="w-5 h-5" />
+                      <span>Home</span>
+                    </Link>
+                    <Link href="/chat" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+                      <MessageCircle className="w-5 h-5" />
+                      <span>Chat</span>
+                      {messageCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {messageCount > 9 ? '9+' : messageCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link href="/notifications" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+                      <Bell className="w-5 h-5" />
+                      <span>Notifications</span>
+                      {notificationCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {notificationCount > 9 ? '9+' : notificationCount}
+                        </span>
+                      )}
+                    </Link>
+                  </div>
+                  <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+                    <UserButton />
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
-    </nav>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 safe-padding">
+        <div className="flex items-center justify-around py-2">
+          <Link href="/" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] justify-center">
+            <Home className="w-6 h-6 mb-1" />
+            <span className="text-xs">Home</span>
+          </Link>
+          
+          <Link href="/chat" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative min-h-[44px] min-w-[44px] justify-center">
+            <MessageCircle className="w-6 h-6 mb-1" />
+            {messageCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {messageCount > 9 ? '9+' : messageCount}
+              </span>
+            )}
+            <span className="text-xs">Chat</span>
+          </Link>
+          
+          <Link href="/notifications" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative min-h-[44px] min-w-[44px] justify-center">
+            <Bell className="w-6 h-6 mb-1" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {notificationCount > 9 ? '9+' : notificationCount}
+              </span>
+            )}
+            <span className="text-xs">Alerts</span>
+          </Link>
+          
+          <div className="flex flex-col items-center py-2 px-3 min-h-[44px] min-w-[44px] justify-center">
+            <UserButton />
+            <span className="text-xs mt-1">Profile</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom padding for mobile to account for bottom navigation */}
+      <div className="lg:hidden h-20"></div>
+    </>
   );
 }

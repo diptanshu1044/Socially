@@ -88,47 +88,48 @@ function ProfilePageClient({
   const formattedDate = format(new Date(user.createdAt), "MMMM yyyy");
 
   return (
-    <div className="max-w-2xl mx-auto my-8">
+    <div className="container-mobile py-4 lg:py-8">
       <div className="grid grid-cols-1 gap-6">
-        <div className="w-6/10 max-w-lg mx-auto">
-          <Card className="bg-card">
+        {/* Profile Card */}
+        <div className="w-full max-w-lg mx-auto">
+          <Card className="bg-card mobile-card">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
-                <Avatar className="w-24 h-24">
+                <Avatar className="w-20 h-20 lg:w-24 lg:h-24">
                   <AvatarImage src={user.image ?? "/avatar.png"} />
                 </Avatar>
-                <h1 className="mt-4 text-2xl font-bold">
+                <h1 className="mt-4 text-xl lg:text-2xl font-bold">
                   {user.name ?? user.username}
                 </h1>
-                <p className="text-muted-foreground">@{user.username}</p>
-                <p className="mt-2 text-sm">{user.bio}</p>
+                <p className="text-muted-foreground text-sm lg:text-base">@{user.username}</p>
+                <p className="mt-2 text-sm lg:text-base">{user.bio}</p>
 
                 {/* PROFILE STATS */}
                 <div className="w-full mt-6">
                   <div className="flex justify-between mb-4">
                     <div>
-                      <div className="font-semibold">
+                      <div className="font-semibold text-sm lg:text-base">
                         {user._count.following.toLocaleString()}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs lg:text-sm text-muted-foreground">
                         Following
                       </div>
                     </div>
                     <Separator orientation="vertical" />
                     <div>
-                      <div className="font-semibold">
+                      <div className="font-semibold text-sm lg:text-base">
                         {user._count.followers.toLocaleString()}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs lg:text-sm text-muted-foreground">
                         Followers
                       </div>
                     </div>
                     <Separator orientation="vertical" />
                     <div>
-                      <div className="font-semibold">
+                      <div className="font-semibold text-sm lg:text-base">
                         {user._count.posts.toLocaleString()}
                       </div>
-                      <div className="text-sm text-muted-foreground">Posts</div>
+                      <div className="text-xs lg:text-sm text-muted-foreground">Posts</div>
                     </div>
                   </div>
                 </div>
@@ -136,11 +137,11 @@ function ProfilePageClient({
                 {/* "FOLLOW & EDIT PROFILE" BUTTONS */}
                 {!currentUser ? (
                   <SignInButton mode="modal">
-                    <Button className="w-full mt-4">Follow</Button>
+                    <Button className="w-full mt-4 min-h-[44px]">Follow</Button>
                   </SignInButton>
                 ) : isOwnProfile ? (
                   <Button
-                    className="w-full mt-4"
+                    className="w-full mt-4 min-h-[44px]"
                     onClick={() => setShowEditDialog(true)}
                   >
                     <EditIcon className="size-4 mr-2" />
@@ -149,7 +150,7 @@ function ProfilePageClient({
                 ) : (
                   <div className="w-full mt-4 space-y-2">
                     <Button
-                      className="w-full"
+                      className="w-full min-h-[44px]"
                       onClick={handleFollow}
                       disabled={isUpdatingFollow}
                       variant={isFollowing ? "outline" : "default"}
@@ -157,7 +158,7 @@ function ProfilePageClient({
                       {isFollowing ? "Unfollow" : "Follow"}
                     </Button>
                     <Link href={`/chat?user=${user.id}`}>
-                      <Button className="w-full" variant="outline">
+                      <Button className="w-full min-h-[44px]" variant="outline">
                         <MessageCircle className="size-4 mr-2" />
                         Message
                       </Button>
@@ -166,7 +167,7 @@ function ProfilePageClient({
                 )}
 
                 {/* LOCATION & WEBSITE */}
-                <div className="w-full mt-6 space-y-2 text-sm">
+                <div className="w-full mt-6 space-y-2 text-xs lg:text-sm">
                   {user.location && (
                     <div className="flex items-center text-muted-foreground">
                       <MapPinIcon className="size-4 mr-2" />
@@ -200,12 +201,13 @@ function ProfilePageClient({
           </Card>
         </div>
 
-        <Tabs defaultValue="posts" className="w-full p-4 ">
-          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent ">
+        {/* Posts and Likes Tabs */}
+        <Tabs defaultValue="posts" className="w-full">
+          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
             <TabsTrigger
               value="posts"
               className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
-               data-[state=active]:bg-transparent px-6 font-semibold "
+               data-[state=active]:bg-transparent px-4 lg:px-6 font-semibold text-sm lg:text-base min-h-[44px]"
             >
               <FileTextIcon className="size-4" />
               Posts
@@ -213,7 +215,7 @@ function ProfilePageClient({
             <TabsTrigger
               value="likes"
               className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
-               data-[state=active]:bg-transparent px-6 font-semibold"
+               data-[state=active]:bg-transparent px-4 lg:px-6 font-semibold text-sm lg:text-base min-h-[44px]"
             >
               <HeartIcon className="size-4" />
               Likes
@@ -221,7 +223,7 @@ function ProfilePageClient({
           </TabsList>
 
           <TabsContent value="posts" className="mt-6">
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               {posts.length > 0 ? (
                 posts.map((post) => (
                   <PostCard key={post.id} post={post} dbUserId={user.id} />
@@ -235,7 +237,7 @@ function ProfilePageClient({
           </TabsContent>
 
           <TabsContent value="likes" className="mt-6">
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               {likedPosts.length > 0 ? (
                 likedPosts.map((post) => (
                   <PostCard key={post.id} post={post} dbUserId={user.id} />
@@ -248,68 +250,76 @@ function ProfilePageClient({
             </div>
           </TabsContent>
         </Tabs>
-
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Edit Profile</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input
-                  name="name"
-                  value={editForm.name}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, name: e.target.value })
-                  }
-                  placeholder="Your name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Bio</Label>
-                <Textarea
-                  name="bio"
-                  value={editForm.bio}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, bio: e.target.value })
-                  }
-                  className="min-h-[100px]"
-                  placeholder="Tell us about yourself"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Location</Label>
-                <Input
-                  name="location"
-                  value={editForm.location}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, location: e.target.value })
-                  }
-                  placeholder="Where are you based?"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Website</Label>
-                <Input
-                  name="website"
-                  value={editForm.website}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, website: e.target.value })
-                  }
-                  placeholder="Your personal website"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button onClick={handleEditSubmit}>Save Changes</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="bio" className="text-right">
+                Bio
+              </Label>
+              <Textarea
+                id="bio"
+                value={editForm.bio}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, bio: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">
+                Location
+              </Label>
+              <Input
+                id="location"
+                value={editForm.location}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, location: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="website" className="text-right">
+                Website
+              </Label>
+              <Input
+                id="website"
+                value={editForm.website}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, website: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleEditSubmit}>Save changes</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

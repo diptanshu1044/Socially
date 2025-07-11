@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Textarea } from "./ui/textarea";
-import { ImageIcon, Loader2Icon, SendIcon } from "lucide-react";
+import { ImageIcon, Loader2Icon, SendIcon, SmileIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { createPost } from "@/actions/post.action";
 import { toast } from "sonner";
@@ -42,24 +42,26 @@ export const CreatePost = () => {
 
   return (
     <SignedIn>
-      <Card className="mb-6">
-        <CardContent className="pt-6">
+      <Card className="border-0 shadow-sm bg-white dark:bg-slate-800 mobile-card">
+        <CardContent className="p-4 lg:p-6">
           <div className="space-y-4">
-            <div className="flex space-x-4">
-              <Avatar className="w-10 h-10">
+            <div className="flex space-x-3 lg:space-x-4">
+              <Avatar className="w-10 h-10 lg:w-12 lg:h-12 flex-shrink-0">
                 <AvatarImage src={user?.imageUrl} />
               </Avatar>
-              <Textarea
-                placeholder="What's on your mind?"
-                className="min-h-[100px] resize-none border-none focus-visible:ring-0 p-0 text-base"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                disabled={isPosting}
-              />
+              <div className="flex-1 min-w-0">
+                <Textarea
+                  placeholder="What's happening?"
+                  className="min-h-[80px] lg:min-h-[100px] resize-none border-none focus-visible:ring-0 p-0 text-sm lg:text-base bg-transparent placeholder:text-slate-500 dark:placeholder:text-slate-400"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  disabled={isPosting}
+                />
+              </div>
             </div>
 
             {(showImageUpload || imageUrl) && (
-              <div className="border rounded-lg p-4">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-slate-50 dark:bg-slate-900">
                 <ImageUpload
                   endpoint="postImage"
                   value={imageUrl}
@@ -71,34 +73,44 @@ export const CreatePost = () => {
               </div>
             )}
 
-            <div className="flex items-center justify-between border-t pt-4">
-              <div className="flex space-x-2">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-primary"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-full h-10 w-10 p-0 min-h-[40px] min-w-[40px]"
                   onClick={() => setShowImageUpload(!showImageUpload)}
                   disabled={isPosting}
                 >
-                  <ImageIcon className="size-4 mr-2" />
-                  Photo
+                  <ImageIcon className="size-5" />
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-600 dark:text-slate-400 hover:text-yellow-500 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20 rounded-full h-10 w-10 p-0 min-h-[40px] min-w-[40px]"
+                  disabled={isPosting}
+                >
+                  <SmileIcon className="size-5" />
                 </Button>
               </div>
+              
               <Button
-                className="flex items-center"
+                className="flex items-center bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full px-4 lg:px-6 py-2 h-10 min-h-[40px]"
                 onClick={handleSubmit}
                 disabled={(!content.trim() && !imageUrl) || isPosting}
               >
                 {isPosting ? (
                   <>
                     <Loader2Icon className="size-4 mr-2 animate-spin" />
-                    Posting...
+                    <span className="hidden sm:inline">Posting...</span>
                   </>
                 ) : (
                   <>
                     <SendIcon className="size-4 mr-2" />
-                    Post
+                    <span className="hidden sm:inline">Post</span>
                   </>
                 )}
               </Button>

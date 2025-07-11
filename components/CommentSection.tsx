@@ -73,7 +73,7 @@ export const CommentSection = ({
 
     return (
       <div className="space-y-1">
-        <div className="max-w-[300px] md:max-w-[400px] break-words">
+        <div className="max-w-[250px] lg:max-w-[300px] xl:max-w-[400px] break-words">
           {isExpanded
             ? comment.content
             : isLongComment
@@ -84,7 +84,7 @@ export const CommentSection = ({
           <div>
             <Button
               variant="link"
-              className="text-blue-500 p-0 h-auto block"
+              className="text-blue-500 p-0 h-auto block text-xs lg:text-sm"
               onClick={() => toggleCommentExpansion(comment.id)}
             >
               {isExpanded ? "See Less" : "See More"}
@@ -108,18 +108,18 @@ export const CommentSection = ({
                 comments.map((comment) => (
                   <div key={comment.id} className="flex px-3 py-2 gap-3">
                     <Link href={`/profile/${comment.author.username}`}>
-                      <Avatar>
+                      <Avatar className="w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0">
                         <AvatarImage src={comment.author.image || ""} />
-                        <AvatarFallback>
+                        <AvatarFallback className="text-xs lg:text-sm">
                           {comment.author.username[0].toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                     </Link>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div>
                         <Link href={`/profile/${comment.author.username}`}>
-                          <span>{comment.author.name}&nbsp;&nbsp;</span>
-                          <span className="text-gray-500">
+                          <span className="text-sm lg:text-base font-medium">{comment.author.name}&nbsp;&nbsp;</span>
+                          <span className="text-gray-500 text-xs lg:text-sm">
                             @{comment.author.username} &nbsp;·&nbsp;{"  "}
                             {<FormatTimeAgo createdAt={comment.createdAt} />}
                           </span>
@@ -131,24 +131,24 @@ export const CommentSection = ({
                 ))}
             </div>
             <div className="flex gap-3 px-3 py-2">
-              <Avatar>
+              <Avatar className="w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0">
                 <AvatarImage src={user ? user.imageUrl : ""} />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs lg:text-sm">
                   {user && user.username ? user.username[0].toUpperCase() : "P"}
                 </AvatarFallback>
               </Avatar>
               <Textarea
                 placeholder="Write a comment..."
-                className="grow w-full bg-transparent h-20 resize-none"
+                className="grow w-full bg-transparent h-16 lg:h-20 resize-none text-sm lg:text-base"
                 onChange={(e) => setNewComment(e.target.value)}
                 value={newComment}
               />
             </div>
             <div className="flex flex-row-reverse px-3 py-2">
-              <Button disabled={isCommenting} onClick={handleComment}>
-                <SendIcon />
-                Comment
-                {isCommenting && "ing..."}
+              <Button disabled={isCommenting} onClick={handleComment} className="min-h-[40px]">
+                <SendIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="hidden sm:inline">Comment</span>
+                {isCommenting && <span className="hidden sm:inline">ing...</span>}
               </Button>
             </div>
           </div>

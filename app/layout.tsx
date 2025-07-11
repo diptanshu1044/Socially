@@ -21,6 +21,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Socially",
   description: "A social media platform",
+  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Socially",
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +39,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased safe-padding`}
         >
           <QueryProvider>
             <ChatProvider>
@@ -43,8 +50,12 @@ export default function RootLayout({
                 disableTransitionOnChange
               >
                 <SpeedInsights />
-                <Navbar />
-                {children}
+                <div className="min-h-screen flex flex-col">
+                  <Navbar />
+                  <main className="flex-1">
+                    {children}
+                  </main>
+                </div>
               </ThemeProvider>
             </ChatProvider>
           </QueryProvider>

@@ -16,7 +16,7 @@ import { FormatTimeAgo } from "./FormatTimeAgo";
 import { CommentButton } from "./CommentButton";
 import { CommentSection } from "./CommentSection";
 import { Button } from "./ui/button";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 
 export interface PostCardProps {
@@ -26,39 +26,39 @@ export interface PostCardProps {
 
 export const PostCard = ({ post, dbUserId }: PostCardProps) => {
   return (
-    <Card className="my-2 md:my-4 px-1 md:px-4 py-4 md:py-6">
-      <CardHeader className="flex flex-row gap-2 md:gap-4 px-2 md:px-6">
-        <div className="flex justify-center items-center">
+    <Card className="border-0 shadow-sm bg-white dark:bg-slate-800 mb-4 mobile-card">
+      <CardHeader className="flex flex-row gap-3 px-4 py-4 lg:px-6 lg:py-6">
+        <div className="flex justify-center items-start flex-shrink-0">
           <Link href={`/profile/${post.author.username}`}>
-            <Avatar>
+            <Avatar className="w-10 h-10 lg:w-12 lg:h-12">
               <AvatarImage src={post.author.image || ""} />
-              <AvatarFallback>
+              <AvatarFallback className="text-sm">
                 {post.author.username?.[0].toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
           </Link>
         </div>
-        <div className="flex gap-1 md:gap-4 flex-col grow">
-          <div className="flex gap-2 items-center">
-            <Link href={`/profile/${post.author.username}`}>
-              <CardTitle>{post.author.name}</CardTitle>
+        <div className="flex gap-2 flex-col grow min-w-0">
+          <div className="flex gap-2 items-center flex-wrap">
+            <Link href={`/profile/${post.author.username}`} className="min-w-0 flex-1">
+              <CardTitle className="text-sm lg:text-base truncate">{post.author.name}</CardTitle>
             </Link>
-            <CardDescription className="max-h-[1.25rem] md:h-auto overflow-y-hidden md:overflow-auto">
-              <Link href={`/profile/${post.author.username}`}>
-                {" "}
+            <CardDescription className="text-xs lg:text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
+              <Link href={`/profile/${post.author.username}`} className="hover:underline">
                 @{post.author.username}
               </Link>
-              · {<FormatTimeAgo createdAt={post.createdAt} />}
+              <span className="mx-1">·</span>
+              <FormatTimeAgo createdAt={post.createdAt} />
             </CardDescription>
           </div>
-          <div>
+          <div className="text-sm lg:text-base leading-relaxed mt-2">
             <TextComponent content={post.content} />
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-1 flex-shrink-0">
           {dbUserId !== post.authorId && (
             <Link href={`/chat?user=${post.authorId}`}>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full min-h-[32px] min-w-[32px]">
                 <MessageCircle className="w-4 h-4" />
               </Button>
             </Link>
@@ -66,19 +66,24 @@ export const PostCard = ({ post, dbUserId }: PostCardProps) => {
           {dbUserId === post.authorId && <DeletePostButton postId={post.id} />}
         </div>
       </CardHeader>
+      
       {post.image && (
-        <CardContent className="flex justify-center items-center">
-          <Image
-            src={post.image}
-            alt="Post image"
-            className={`w-full h-auto object-cover`}
-            width={200}
-            height={200}
-          />
+        <CardContent className="px-4 pb-4 lg:px-6 lg:pb-6">
+          <div className="rounded-xl overflow-hidden">
+            <Image
+              src={post.image}
+              alt="Post image"
+              className="w-full h-auto object-cover"
+              width={600}
+              height={400}
+              priority={false}
+            />
+          </div>
         </CardContent>
       )}
-      <CardFooter className="flex flex-col items-start gap-2 px-0">
-        <div className="flex gap-4 pb-3 ml-10 md:ml-14">
+      
+      <CardFooter className="flex flex-col items-start gap-3 px-4 pb-4 lg:px-6 lg:pb-6">
+        <div className="flex gap-6 w-full">
           <LikePostButton
             likes={post._count.likes}
             dbUserId={dbUserId}
