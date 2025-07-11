@@ -1,12 +1,20 @@
 "use client";
 
 import  ModeToggle  from "@/components/ModeToggle";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "./ui/button";
-import { Bell, MessageCircle, Home, User, Search, Menu } from "lucide-react";
+import { Bell, MessageCircle, Home, User, Search, Menu, Settings, LogOut, User as UserIcon, Heart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 interface Notification {
   id: string;
@@ -17,9 +25,34 @@ interface Notification {
 }
 
 export function Navbar() {
+  const { user } = useUser();
   const [notificationCount, setNotificationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/users/me');
+        if (response.ok) {
+          const data = await response.json();
+          // Fetch user details to get username
+          const userResponse = await fetch(`/api/users/${data.userId}`);
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            setCurrentUser(userData);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
+    if (user) {
+      fetchCurrentUser();
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -89,7 +122,62 @@ export function Navbar() {
               </Link>
 
               <ModeToggle />
-              <UserButton />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full">
+                    <UserIcon className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user?.fullName || 'User'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.emailAddresses[0]?.emailAddress}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={currentUser ? `/profile/${currentUser.username}` : "#"} className="flex items-center">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/notifications" className="flex items-center">
+                      <Bell className="mr-2 h-4 w-4" />
+                      <span>Notifications</span>
+                      {notificationCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {notificationCount > 9 ? '9+' : notificationCount}
+                        </span>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/chat" className="flex items-center">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      <span>Messages</span>
+                      {messageCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {messageCount > 9 ? '9+' : messageCount}
+                        </span>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -121,16 +209,25 @@ export function Navbar() {
               <SheetContent side="right" className="w-80 p-0">
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold">Menu</h2>
+                    <div className="flex flex-col space-y-1">
+                      <h2 className="text-lg font-semibold">{user?.fullName || 'User'}</h2>
+                      <p className="text-sm text-muted-foreground">
+                        {user?.emailAddresses[0]?.emailAddress}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 p-4 space-y-4">
+                  <div className="flex-1 p-4 space-y-2">
                     <Link href="/" onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                       <Home className="w-5 h-5" />
                       <span>Home</span>
                     </Link>
+                    <Link href={currentUser ? `/profile/${currentUser.username}` : "#"} onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <UserIcon className="w-5 h-5" />
+                      <span>Profile</span>
+                    </Link>
                     <Link href="/chat" onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
                       <MessageCircle className="w-5 h-5" />
-                      <span>Chat</span>
+                      <span>Messages</span>
                       {messageCount > 0 && (
                         <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                           {messageCount > 9 ? '9+' : messageCount}
@@ -146,9 +243,15 @@ export function Navbar() {
                         </span>
                       )}
                     </Link>
-                  </div>
-                  <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-                    <UserButton />
+                    <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
+                    <button className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full text-left">
+                      <Settings className="w-5 h-5" />
+                      <span>Settings</span>
+                    </button>
+                    <button className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full text-left">
+                      <LogOut className="w-5 h-5" />
+                      <span>Log out</span>
+                    </button>
                   </div>
                 </div>
               </SheetContent>
@@ -185,10 +288,10 @@ export function Navbar() {
             <span className="text-xs">Alerts</span>
           </Link>
           
-          <div className="flex flex-col items-center py-2 px-3 min-h-[44px] min-w-[44px] justify-center">
-            <UserButton />
-            <span className="text-xs mt-1">Profile</span>
-          </div>
+          <Link href={currentUser ? `/profile/${currentUser.username}` : "#"} className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] justify-center">
+            <UserIcon className="w-6 h-6 mb-1" />
+            <span className="text-xs">Profile</span>
+          </Link>
         </div>
       </div>
     </>
