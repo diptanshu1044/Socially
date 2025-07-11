@@ -6,11 +6,13 @@ import { getDbUserId } from "@/actions/user.action";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { ChatInterface } from "@/components/ChatInterface";
+import { ChatNavbar } from "@/components/ChatNavbar";
 import { ConversationList } from "@/components/ConversationList";
 import { UserSelection } from "@/components/UserSelection";
 import { ChatSearch } from "@/components/ChatSearch";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { Conversation } from "@/types/socket.types";
+import { useChat } from "@/components/ChatProvider";
 
 export default function ChatPage({
   searchParams,
@@ -24,6 +26,14 @@ export default function ChatPage({
   const [params, setParams] = useState<{ user?: string; conversation?: string }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [otherUser, setOtherUser] = useState<{
+    id: string;
+    name: string;
+    username: string;
+    image?: string;
+  } | null>(null);
+  
+  const { isConnected } = useChat();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -71,7 +81,7 @@ export default function ChatPage({
   }
 
   return (
-    <div className="h-[calc(100vh-56px)] lg:h-[calc(100vh-64px)] flex overflow-hidden">
+    <div className="h-[calc(100vh-136px)] lg:h-[calc(100vh-128px)] flex overflow-hidden">
       {/* Mobile Sidebar */}
       <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300"
            style={{ opacity: showSidebar ? 1 : 0, pointerEvents: showSidebar ? 'auto' : 'none' }}
@@ -152,22 +162,18 @@ export default function ChatPage({
       
       {/* Chat Interface */}
       <div className="flex-1 flex flex-col h-full">
-        {/* Mobile Header */}
-        <div className="lg:hidden p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={() => setShowSidebar(true)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              ☰
-            </button>
-            <h2 className="text-lg font-semibold">Chat</h2>
-            <div className="w-10"></div> {/* Spacer for centering */}
-          </div>
-        </div>
+        {/* Chat Navbar */}
+        <ChatNavbar 
+          otherUser={otherUser}
+          isConnected={isConnected}
+          onMenuClick={() => setShowSidebar(true)}
+        />
         
         <div className="flex-1 overflow-hidden">
-          <ChatInterface selectedUserId={selectedUserId} />
+          <ChatInterface 
+            selectedUserId={selectedUserId} 
+            onOtherUserChange={setOtherUser}
+          />
         </div>
       </div>
     </div>
