@@ -71,7 +71,7 @@ export default function ChatPage({
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="h-[calc(100vh-56px)] lg:h-[calc(100vh-64px)] flex overflow-hidden">
       {/* Mobile Sidebar */}
       <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300"
            style={{ opacity: showSidebar ? 1 : 0, pointerEvents: showSidebar ? 'auto' : 'none' }}
@@ -151,7 +151,7 @@ export default function ChatPage({
       </div>
       
       {/* Chat Interface */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-full">
         {/* Mobile Header */}
         <div className="lg:hidden p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between">
@@ -166,7 +166,9 @@ export default function ChatPage({
           </div>
         </div>
         
-        <ChatInterface selectedUserId={selectedUserId} />
+        <div className="flex-1 overflow-hidden">
+          <ChatInterface selectedUserId={selectedUserId} />
+        </div>
       </div>
     </div>
   );
