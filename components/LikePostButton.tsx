@@ -46,16 +46,16 @@ export const LikePostButton = ({
       variant="ghost"
       onClick={handleLike}
       disabled={isLiking}
-      className={`gap-2 h-10 px-3 rounded-full transition-all duration-200 min-h-[40px] ${
+      className={`gap-1.5 sm:gap-2 h-8 sm:h-10 px-2 sm:px-3 rounded-full transition-all duration-200 min-h-[32px] sm:min-h-[40px] ${
         hasLiked 
           ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20" 
           : "text-slate-600 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
       }`}
     >
       <Heart 
-        className={`w-4 h-4 lg:w-5 lg:h-5 ${hasLiked ? "fill-red-500" : ""}`} 
+        className={`w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 ${hasLiked ? "fill-red-500" : ""}`} 
       /> 
-      <span className="text-xs lg:text-sm font-medium">{optimisticLikes}</span>
+      <span className="text-xs font-medium">{optimisticLikes}</span>
     </Button>
   );
 };
