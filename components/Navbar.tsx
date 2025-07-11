@@ -180,9 +180,6 @@ export function Navbar() {
           </div>
         </div>
       </div>
-
-      {/* Bottom padding for mobile to account for bottom navigation */}
-      <div className="lg:hidden h-20"></div>
     </>
   );
 }
