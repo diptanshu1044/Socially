@@ -191,6 +191,28 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
   
+  /* Responsive height utilities for navbar accounting */
+  .h-screen-navbar {
+    height: calc(100vh - 136px); /* Mobile: navbar + bottom nav */
+  }
+  
+  @media (min-width: 1024px) {
+    .h-screen-navbar {
+      height: calc(100vh - 80px); /* Desktop: navbar only */
+    }
+  }
+  
+  /* Responsive min-height utilities */
+  .min-h-screen-navbar {
+    min-height: calc(100vh - 136px); /* Mobile: navbar + bottom nav */
+  }
+  
+  @media (min-width: 1024px) {
+    .min-h-screen-navbar {
+      min-height: calc(100vh - 80px); /* Desktop: navbar only */
+    }
+  }
+  
   /* Mobile-first grid layouts */
   .mobile-grid {
     @apply grid gap-4;

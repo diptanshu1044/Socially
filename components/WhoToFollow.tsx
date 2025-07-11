@@ -1,8 +1,6 @@
 import { getRandomUsers } from "@/actions/user.action";
 import { FollowButton } from "./FollowButton";
-import { Button } from "./ui/button";
-import { MessageCircle, Users } from "lucide-react";
-import Link from "next/link";
+import { Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export async function WhoToFollow() {
@@ -39,11 +37,6 @@ export async function WhoToFollow() {
               </div>
             </div>
             <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
-              <Link href={`/chat?user=${user.id}`}>
-                <Button size="icon" variant="ghost" className="h-7 w-7 lg:h-8 lg:w-8 p-0 rounded-full min-h-[28px] min-w-[28px] lg:min-h-[32px] lg:min-w-[32px]">
-                  <MessageCircle className="w-3 h-3 lg:w-4 lg:h-4" />
-                </Button>
-              </Link>
               <FollowButton userId={user.id} />
             </div>
           </div>

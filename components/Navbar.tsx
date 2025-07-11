@@ -57,17 +57,8 @@ export function Navbar() {
       <nav className="hidden lg:block border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-40">
         <div className="container-mobile">
           <div className="flex justify-between items-center h-20">
-            {/* Left side - Home button */}
-            <div className="flex items-center space-x-4">
-              <Link href="/">
-                <Button variant="ghost" size="sm">
-                  <Home className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Center - Socially logo */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
+            {/* Left side - Socially logo */}
+            <div className="flex items-center">
               <Link href="/">
                 <h1 className="text-xl font-bold">Socially</h1>
               </Link>
