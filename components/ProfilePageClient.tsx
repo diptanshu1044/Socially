@@ -88,53 +88,218 @@ function ProfilePageClient({
   const formattedDate = format(new Date(user.createdAt), "MMMM yyyy");
 
   return (
-    <div className="container-mobile py-4 lg:py-8">
-      <div className="grid grid-cols-1 gap-6">
-        {/* Profile Card */}
-        <div className="w-full max-w-lg mx-auto">
-          <Card className="bg-card mobile-card">
-            <CardContent className="pt-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      {/* Mobile Layout */}
+      <div className="block lg:hidden">
+        <div className="container-mobile py-4 space-y-4">
+          {/* Profile Card - Mobile */}
+          <div className="mobile-card">
+            <div className="flex flex-col items-center text-center">
+              <Avatar className="w-20 h-20">
+                <AvatarImage src={user.image ?? "/avatar.png"} />
+              </Avatar>
+              <h1 className="mt-4 text-xl font-bold">
+                {user.name ?? user.username}
+              </h1>
+              <p className="text-muted-foreground text-sm">@{user.username}</p>
+              <p className="mt-2 text-sm">{user.bio}</p>
+
+              {/* Profile Stats - Mobile */}
+              <div className="w-full mt-6">
+                <div className="flex justify-between mb-4">
+                  <div>
+                    <div className="font-semibold text-sm">
+                      {user._count.following.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Following
+                    </div>
+                  </div>
+                  <Separator orientation="vertical" />
+                  <div>
+                    <div className="font-semibold text-sm">
+                      {user._count.followers.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Followers
+                    </div>
+                  </div>
+                  <Separator orientation="vertical" />
+                  <div>
+                    <div className="font-semibold text-sm">
+                      {user._count.posts.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Posts</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Mobile */}
+              {!currentUser ? (
+                <SignInButton mode="modal">
+                  <Button className="w-full mt-4 min-h-[44px]">Follow</Button>
+                </SignInButton>
+              ) : isOwnProfile ? (
+                <Button
+                  className="w-full mt-4 min-h-[44px]"
+                  onClick={() => setShowEditDialog(true)}
+                >
+                  <EditIcon className="size-4 mr-2" />
+                  Edit Profile
+                </Button>
+              ) : (
+                <div className="w-full mt-4 space-y-2">
+                  <Button
+                    className="w-full min-h-[44px]"
+                    onClick={handleFollow}
+                    disabled={isUpdatingFollow}
+                    variant={isFollowing ? "outline" : "default"}
+                  >
+                    {isFollowing ? "Unfollow" : "Follow"}
+                  </Button>
+                  <Link href={`/chat?user=${user.id}`}>
+                    <Button className="w-full min-h-[44px]" variant="outline">
+                      <MessageCircle className="size-4 mr-2" />
+                      Message
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {/* Location & Website - Mobile */}
+              <div className="w-full mt-6 space-y-2 text-xs">
+                {user.location && (
+                  <div className="flex items-center text-muted-foreground">
+                    <MapPinIcon className="size-4 mr-2" />
+                    {user.location}
+                  </div>
+                )}
+                {user.website && (
+                  <div className="flex items-center text-muted-foreground">
+                    <LinkIcon className="size-4 mr-2" />
+                    <a
+                      href={
+                        user.website.startsWith("http")
+                          ? user.website
+                          : `https://${user.website}`
+                      }
+                      className="hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {user.website}
+                    </a>
+                  </div>
+                )}
+                <div className="flex items-center text-muted-foreground">
+                  <CalendarIcon className="size-4 mr-2" />
+                  Joined {formattedDate}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Posts and Likes Tabs - Mobile */}
+          <div className="mobile-card">
+            <Tabs defaultValue="posts" className="w-full">
+              <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+                <TabsTrigger
+                  value="posts"
+                  className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
+                   data-[state=active]:bg-transparent px-4 font-semibold text-sm min-h-[44px]"
+                >
+                  <FileTextIcon className="size-4" />
+                  Posts
+                </TabsTrigger>
+                <TabsTrigger
+                  value="likes"
+                  className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
+                   data-[state=active]:bg-transparent px-4 font-semibold text-sm min-h-[44px]"
+                >
+                  <HeartIcon className="size-4" />
+                  Likes
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="posts" className="mt-6">
+                <div className="space-y-4">
+                  {posts.length > 0 ? (
+                    posts.map((post) => (
+                      <PostCard key={post.id} post={post} dbUserId={user.id} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No posts yet
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="likes" className="mt-6">
+                <div className="space-y-4">
+                  {likedPosts.length > 0 ? (
+                    likedPosts.map((post) => (
+                      <PostCard key={post.id} post={post} dbUserId={user.id} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No liked posts to show
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+
+      {/* Tablet Layout */}
+      <div className="hidden lg:block xl:hidden">
+        <div className="container-mobile py-6">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Profile Card - Tablet */}
+            <div className="mobile-card">
               <div className="flex flex-col items-center text-center">
-                <Avatar className="w-20 h-20 lg:w-24 lg:h-24">
+                <Avatar className="w-24 h-24">
                   <AvatarImage src={user.image ?? "/avatar.png"} />
                 </Avatar>
-                <h1 className="mt-4 text-xl lg:text-2xl font-bold">
+                <h1 className="mt-4 text-2xl font-bold">
                   {user.name ?? user.username}
                 </h1>
-                <p className="text-muted-foreground text-sm lg:text-base">@{user.username}</p>
-                <p className="mt-2 text-sm lg:text-base">{user.bio}</p>
+                <p className="text-muted-foreground text-base">@{user.username}</p>
+                <p className="mt-2 text-base">{user.bio}</p>
 
-                {/* PROFILE STATS */}
+                {/* Profile Stats - Tablet */}
                 <div className="w-full mt-6">
                   <div className="flex justify-between mb-4">
                     <div>
-                      <div className="font-semibold text-sm lg:text-base">
+                      <div className="font-semibold text-base">
                         {user._count.following.toLocaleString()}
                       </div>
-                      <div className="text-xs lg:text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         Following
                       </div>
                     </div>
                     <Separator orientation="vertical" />
                     <div>
-                      <div className="font-semibold text-sm lg:text-base">
+                      <div className="font-semibold text-base">
                         {user._count.followers.toLocaleString()}
                       </div>
-                      <div className="text-xs lg:text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         Followers
                       </div>
                     </div>
                     <Separator orientation="vertical" />
                     <div>
-                      <div className="font-semibold text-sm lg:text-base">
+                      <div className="font-semibold text-base">
                         {user._count.posts.toLocaleString()}
                       </div>
-                      <div className="text-xs lg:text-sm text-muted-foreground">Posts</div>
+                      <div className="text-sm text-muted-foreground">Posts</div>
                     </div>
                   </div>
                 </div>
 
-                {/* "FOLLOW & EDIT PROFILE" BUTTONS */}
+                {/* Action Buttons - Tablet */}
                 {!currentUser ? (
                   <SignInButton mode="modal">
                     <Button className="w-full mt-4 min-h-[44px]">Follow</Button>
@@ -166,8 +331,8 @@ function ProfilePageClient({
                   </div>
                 )}
 
-                {/* LOCATION & WEBSITE */}
-                <div className="w-full mt-6 space-y-2 text-xs lg:text-sm">
+                {/* Location & Website - Tablet */}
+                <div className="w-full mt-6 space-y-2 text-sm">
                   {user.location && (
                     <div className="flex items-center text-muted-foreground">
                       <MapPinIcon className="size-4 mr-2" />
@@ -197,59 +362,247 @@ function ProfilePageClient({
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Posts and Likes Tabs - Tablet */}
+            <div className="mobile-card">
+              <Tabs defaultValue="posts" className="w-full">
+                <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+                  <TabsTrigger
+                    value="posts"
+                    className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
+                     data-[state=active]:bg-transparent px-6 font-semibold text-base min-h-[44px]"
+                  >
+                    <FileTextIcon className="size-4" />
+                    Posts
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="likes"
+                    className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
+                     data-[state=active]:bg-transparent px-6 font-semibold text-base min-h-[44px]"
+                  >
+                    <HeartIcon className="size-4" />
+                    Likes
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="posts" className="mt-6">
+                  <div className="space-y-6">
+                    {posts.length > 0 ? (
+                      posts.map((post) => (
+                        <PostCard key={post.id} post={post} dbUserId={user.id} />
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No posts yet
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="likes" className="mt-6">
+                  <div className="space-y-6">
+                    {likedPosts.length > 0 ? (
+                      likedPosts.map((post) => (
+                        <PostCard key={post.id} post={post} dbUserId={user.id} />
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No liked posts to show
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
         </div>
+      </div>
 
-        {/* Posts and Likes Tabs */}
-        <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-            <TabsTrigger
-              value="posts"
-              className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
-               data-[state=active]:bg-transparent px-4 lg:px-6 font-semibold text-sm lg:text-base min-h-[44px]"
-            >
-              <FileTextIcon className="size-4" />
-              Posts
-            </TabsTrigger>
-            <TabsTrigger
-              value="likes"
-              className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
-               data-[state=active]:bg-transparent px-4 lg:px-6 font-semibold text-sm lg:text-base min-h-[44px]"
-            >
-              <HeartIcon className="size-4" />
-              Likes
-            </TabsTrigger>
-          </TabsList>
+      {/* Desktop Layout */}
+      <div className="hidden xl:block">
+        <div className="container-mobile py-8">
+          <div className="grid grid-cols-12 gap-8">
+            {/* Left Sidebar - Profile */}
+            <div className="col-span-3">
+              <div className="sticky top-8">
+                <div className="mobile-card">
+                  <div className="flex flex-col items-center text-center">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={user.image ?? "/avatar.png"} />
+                    </Avatar>
+                    <h1 className="mt-4 text-2xl font-bold">
+                      {user.name ?? user.username}
+                    </h1>
+                    <p className="text-muted-foreground text-base">@{user.username}</p>
+                    <p className="mt-2 text-base">{user.bio}</p>
 
-          <TabsContent value="posts" className="mt-6">
-            <div className="space-y-4 lg:space-y-6">
-              {posts.length > 0 ? (
-                posts.map((post) => (
-                  <PostCard key={post.id} post={post} dbUserId={user.id} />
-                ))
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No posts yet
+                    {/* Profile Stats - Desktop */}
+                    <div className="w-full mt-6">
+                      <div className="flex justify-between mb-4">
+                        <div>
+                          <div className="font-semibold text-base">
+                            {user._count.following.toLocaleString()}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Following
+                          </div>
+                        </div>
+                        <Separator orientation="vertical" />
+                        <div>
+                          <div className="font-semibold text-base">
+                            {user._count.followers.toLocaleString()}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Followers
+                          </div>
+                        </div>
+                        <Separator orientation="vertical" />
+                        <div>
+                          <div className="font-semibold text-base">
+                            {user._count.posts.toLocaleString()}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Posts</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons - Desktop */}
+                    {!currentUser ? (
+                      <SignInButton mode="modal">
+                        <Button className="w-full mt-4 min-h-[44px]">Follow</Button>
+                      </SignInButton>
+                    ) : isOwnProfile ? (
+                      <Button
+                        className="w-full mt-4 min-h-[44px]"
+                        onClick={() => setShowEditDialog(true)}
+                      >
+                        <EditIcon className="size-4 mr-2" />
+                        Edit Profile
+                      </Button>
+                    ) : (
+                      <div className="w-full mt-4 space-y-2">
+                        <Button
+                          className="w-full min-h-[44px]"
+                          onClick={handleFollow}
+                          disabled={isUpdatingFollow}
+                          variant={isFollowing ? "outline" : "default"}
+                        >
+                          {isFollowing ? "Unfollow" : "Follow"}
+                        </Button>
+                        <Link href={`/chat?user=${user.id}`}>
+                          <Button className="w-full min-h-[44px]" variant="outline">
+                            <MessageCircle className="size-4 mr-2" />
+                            Message
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Location & Website - Desktop */}
+                    <div className="w-full mt-6 space-y-2 text-sm">
+                      {user.location && (
+                        <div className="flex items-center text-muted-foreground">
+                          <MapPinIcon className="size-4 mr-2" />
+                          {user.location}
+                        </div>
+                      )}
+                      {user.website && (
+                        <div className="flex items-center text-muted-foreground">
+                          <LinkIcon className="size-4 mr-2" />
+                          <a
+                            href={
+                              user.website.startsWith("http")
+                                ? user.website
+                                : `https://${user.website}`
+                            }
+                            className="hover:underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {user.website}
+                          </a>
+                        </div>
+                      )}
+                      <div className="flex items-center text-muted-foreground">
+                        <CalendarIcon className="size-4 mr-2" />
+                        Joined {formattedDate}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-          </TabsContent>
+            
+            {/* Main Content - Posts and Likes */}
+            <div className="col-span-6">
+              <div className="mobile-card">
+                <Tabs defaultValue="posts" className="w-full">
+                  <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+                    <TabsTrigger
+                      value="posts"
+                      className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
+                       data-[state=active]:bg-transparent px-6 font-semibold text-base min-h-[44px]"
+                    >
+                      <FileTextIcon className="size-4" />
+                      Posts
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="likes"
+                      className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
+                       data-[state=active]:bg-transparent px-6 font-semibold text-base min-h-[44px]"
+                    >
+                      <HeartIcon className="size-4" />
+                      Likes
+                    </TabsTrigger>
+                  </TabsList>
 
-          <TabsContent value="likes" className="mt-6">
-            <div className="space-y-4 lg:space-y-6">
-              {likedPosts.length > 0 ? (
-                likedPosts.map((post) => (
-                  <PostCard key={post.id} post={post} dbUserId={user.id} />
-                ))
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No liked posts to show
-                </div>
-              )}
+                  <TabsContent value="posts" className="mt-6">
+                    <div className="space-y-6">
+                      {posts.length > 0 ? (
+                        posts.map((post) => (
+                          <PostCard key={post.id} post={post} dbUserId={user.id} />
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          No posts yet
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="likes" className="mt-6">
+                    <div className="space-y-6">
+                      {likedPosts.length > 0 ? (
+                        likedPosts.map((post) => (
+                          <PostCard key={post.id} post={post} dbUserId={user.id} />
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          No liked posts to show
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
+            
+            {/* Right Sidebar - Empty for now */}
+            <div className="col-span-3">
+              <div className="sticky top-8">
+                <div className="mobile-card">
+                  <div className="text-center py-8">
+                    <h3 className="text-lg font-semibold mb-2">Profile</h3>
+                    <p className="text-sm text-muted-foreground">
+                      View posts and likes from this user
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Edit Profile Dialog */}
