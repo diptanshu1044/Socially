@@ -58,9 +58,9 @@ export function Navbar() {
         <div className="container-mobile">
           <div className="flex justify-between items-center h-20">
             {/* Left side - Socially logo */}
-            <div className="flex items-center">
-              <Link href="/">
-                <h1 className="text-xl font-bold">Socially</h1>
+            <div className="flex items-center justify-center">
+              <Link href="/" className="flex items-center justify-center">
+                <h1 className="text-2xl font-bold">Socially</h1>
               </Link>
             </div>
 
