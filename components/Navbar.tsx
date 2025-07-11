@@ -56,11 +56,9 @@ export function Navbar() {
       {/* Desktop Navbar */}
       <nav className="hidden lg:block border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-40">
         <div className="container-mobile">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
+            {/* Left side - Home button */}
             <div className="flex items-center space-x-4">
-              <Link href="/">
-                <h1 className="text-xl font-bold">Socially</h1>
-              </Link>
               <Link href="/">
                 <Button variant="ghost" size="sm">
                   <Home className="w-4 h-4" />
@@ -68,6 +66,14 @@ export function Navbar() {
               </Link>
             </div>
 
+            {/* Center - Socially logo */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <Link href="/">
+                <h1 className="text-xl font-bold">Socially</h1>
+              </Link>
+            </div>
+
+            {/* Right side - Actions */}
             <div className="flex items-center space-x-4">
               <Link href="/chat">
                 <Button variant="ghost" size="sm" className="relative">
@@ -100,12 +106,21 @@ export function Navbar() {
 
       {/* Mobile Top Bar */}
       <div className="lg:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 safe-padding">
-        <div className="flex items-center justify-between h-14 px-4">
-          <Link href="/">
-            <h1 className="text-lg font-bold">Socially</h1>
-          </Link>
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-between h-16 px-4">
+          {/* Left side - Mode toggle */}
+          <div className="flex items-center">
             <ModeToggle />
+          </div>
+
+          {/* Center - Socially logo */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
+            <Link href="/">
+              <h1 className="text-lg font-bold">Socially</h1>
+            </Link>
+          </div>
+
+          {/* Right side - Menu button */}
+          <div className="flex items-center">
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
@@ -153,7 +168,7 @@ export function Navbar() {
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 safe-padding">
-        <div className="flex items-center justify-around py-2">
+        <div className="flex items-center justify-around py-3">
           <Link href="/" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] justify-center">
             <Home className="w-6 h-6 mb-1" />
             <span className="text-xs">Home</span>
