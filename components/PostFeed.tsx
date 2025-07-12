@@ -76,18 +76,23 @@ export function PostFeed({ initialPosts, initialHasMore, dbUserId }) {
   }, [hasMore, loading, loadMorePosts]);
 
   return (
-    <>
+    <div className="space-y-4">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} dbUserId={dbUserId} />
       ))}
 
       {/* Loading indicator and trigger for next page */}
-      <div ref={loaderRef} className="py-4 text-center">
-        {loading && <p className="text-gray-500">Loading more posts...</p>}
+      <div ref={loaderRef} className="py-6 text-center">
+        {loading && (
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-4 h-4 border-2 border-slate-300 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin"></div>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">Loading more posts...</p>
+          </div>
+        )}
         {!hasMore && posts.length > 0 && (
-          <p className="text-gray-500">No more posts to show</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">You&apos;ve reached the end!</p>
         )}
       </div>
-    </>
+    </div>
   );
 }

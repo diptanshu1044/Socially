@@ -20,6 +20,12 @@ import {
 
 interface ChatInterfaceProps {
   selectedUserId?: string;
+  onOtherUserChange?: (user: {
+    id: string;
+    name: string;
+    username: string;
+    image?: string;
+  } | null) => void;
 }
 
 interface User {
@@ -29,7 +35,7 @@ interface User {
   image?: string;
 }
 
-export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
+export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -127,6 +133,13 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
       }
     };
   }, [selectedUserId, currentConversationId, handleCreateConversation, joinConversation, leaveConversation, loadMessages]);
+
+  // Notify parent component when otherUser changes
+  useEffect(() => {
+    if (onOtherUserChange) {
+      onOtherUserChange(otherUser);
+    }
+  }, [otherUser, onOtherUserChange]);
 
   useEffect(() => {
     if (!socket) return;
@@ -309,24 +322,6 @@ export function ChatInterface({ selectedUserId }: ChatInterfaceProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Chat Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
-          <Avatar>
-            <AvatarImage src={otherUser?.image || ""} />
-            <AvatarFallback>
-              {otherUser?.name?.[0]?.toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h3 className="font-semibold">{otherUser?.name || "Chat"}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {isConnected ? 'Connected' : 'Disconnected'}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {isLoading ? (

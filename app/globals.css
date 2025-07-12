@@ -119,11 +119,123 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Mobile-first viewport */
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+  
+  /* Mobile-first responsive text sizes */
+  html {
+    font-size: 14px; /* Base mobile font size */
+  }
+  
+  @media (min-width: 768px) {
+    html {
+      font-size: 16px; /* Desktop font size */
+    }
+  }
+  
+  /* Improve touch targets on mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better scrolling on mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 @theme {
   --breakpoint-tablet: 73rem;
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  /* Mobile-first container */
+  .container-mobile {
+    @apply w-full px-4 mx-auto;
+    max-width: 100%;
+  }
+  
+  @media (min-width: 640px) {
+    .container-mobile {
+      @apply px-6;
+      max-width: 640px;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .container-mobile {
+      max-width: 768px;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container-mobile {
+      max-width: 1024px;
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .container-mobile {
+      max-width: 1280px;
+    }
+  }
+  
+  /* Mobile-safe spacing */
+  .safe-padding {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Responsive height utilities for navbar accounting */
+  .h-screen-navbar {
+    height: calc(100vh - 136px); /* Mobile: navbar + bottom nav */
+  }
+  
+  @media (min-width: 1024px) {
+    .h-screen-navbar {
+      height: calc(100vh - 80px); /* Desktop: navbar only */
+    }
+  }
+  
+  /* Responsive min-height utilities */
+  .min-h-screen-navbar {
+    min-height: calc(100vh - 136px); /* Mobile: navbar + bottom nav */
+  }
+  
+  @media (min-width: 1024px) {
+    .min-h-screen-navbar {
+      min-height: calc(100vh - 80px); /* Desktop: navbar only */
+    }
+  }
+  
+  /* Mobile-first grid layouts */
+  .mobile-grid {
+    @apply grid gap-4;
+    grid-template-columns: 1fr;
+  }
+  
+  @media (min-width: 768px) {
+    .mobile-grid {
+      @apply gap-6;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  }
+  
+  /* Mobile-first card layouts */
+  .mobile-card {
+    @apply bg-card rounded-lg border shadow-sm p-4;
+  }
+  
+  @media (min-width: 768px) {
+    .mobile-card {
+      @apply p-6;
+    }
+  }
 }
 
 @import "uploadthing/tw/v4";

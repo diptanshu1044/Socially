@@ -73,7 +73,7 @@ export const CommentSection = ({
 
     return (
       <div className="space-y-1">
-        <div className="max-w-[300px] md:max-w-[400px] break-words">
+        <div className="max-w-[250px] lg:max-w-[300px] xl:max-w-[400px] break-words">
           {isExpanded
             ? comment.content
             : isLongComment
@@ -84,7 +84,7 @@ export const CommentSection = ({
           <div>
             <Button
               variant="link"
-              className="text-blue-500 p-0 h-auto block"
+              className="text-blue-500 p-0 h-auto block text-xs lg:text-sm"
               onClick={() => toggleCommentExpansion(comment.id)}
             >
               {isExpanded ? "See Less" : "See More"}
@@ -101,55 +101,64 @@ export const CommentSection = ({
     <>
       {showCommentSection && postId === thisPostId && (
         <>
-          <Separator />
-          <div className="w-full">
-            <div className="flex flex-col gap-2">
+          <Separator className="my-2" />
+          <div className="w-full space-y-3">
+            {/* Comments list */}
+            <div className="flex flex-col gap-2 sm:gap-3">
               {comments.length > 0 &&
                 comments.map((comment) => (
-                  <div key={comment.id} className="flex px-3 py-2 gap-3">
-                    <Link href={`/profile/${comment.author.username}`}>
-                      <Avatar>
+                  <div key={comment.id} className="flex gap-2 sm:gap-3 px-2 sm:px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+                    <Link href={`/profile/${comment.author.username}`} className="flex-shrink-0">
+                      <Avatar className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 ring-1 ring-slate-200 dark:ring-slate-700">
                         <AvatarImage src={comment.author.image || ""} />
-                        <AvatarFallback>
+                        <AvatarFallback className="text-xs font-medium bg-slate-100 dark:bg-slate-700">
                           {comment.author.username[0].toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                     </Link>
-                    <div>
-                      <div>
-                        <Link href={`/profile/${comment.author.username}`}>
-                          <span>{comment.author.name}&nbsp;&nbsp;</span>
-                          <span className="text-gray-500">
-                            @{comment.author.username} &nbsp;·&nbsp;{"  "}
-                            {<FormatTimeAgo createdAt={comment.createdAt} />}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                        <Link href={`/profile/${comment.author.username}`} className="group">
+                          <span className="text-xs sm:text-sm lg:text-base font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {comment.author.name}
                           </span>
                         </Link>
+                        <span className="text-gray-500 text-xs">
+                          @{comment.author.username} · <FormatTimeAgo createdAt={comment.createdAt} />
+                        </span>
                       </div>
                       {renderCommentContent(comment)}
                     </div>
                   </div>
                 ))}
             </div>
-            <div className="flex gap-3 px-3 py-2">
-              <Avatar>
+            
+            {/* Comment input */}
+            <div className="flex gap-2 sm:gap-3 px-2 sm:px-3 py-2">
+              <Avatar className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 flex-shrink-0 ring-1 ring-slate-200 dark:ring-slate-700">
                 <AvatarImage src={user ? user.imageUrl : ""} />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs font-medium bg-slate-100 dark:bg-slate-700">
                   {user && user.username ? user.username[0].toUpperCase() : "P"}
                 </AvatarFallback>
               </Avatar>
-              <Textarea
-                placeholder="Write a comment..."
-                className="grow w-full bg-transparent h-20 resize-none"
-                onChange={(e) => setNewComment(e.target.value)}
-                value={newComment}
-              />
-            </div>
-            <div className="flex flex-row-reverse px-3 py-2">
-              <Button disabled={isCommenting} onClick={handleComment}>
-                <SendIcon />
-                Comment
-                {isCommenting && "ing..."}
-              </Button>
+              <div className="flex-1 space-y-2">
+                <Textarea
+                  placeholder="Write a comment..."
+                  className="w-full bg-transparent h-12 sm:h-16 lg:h-20 resize-none text-xs sm:text-sm lg:text-base border-0 focus:ring-0 focus:outline-none p-0 min-h-[48px] sm:min-h-[64px] lg:min-h-[80px]"
+                  onChange={(e) => setNewComment(e.target.value)}
+                  value={newComment}
+                />
+                <div className="flex justify-end">
+                  <Button 
+                    disabled={isCommenting || !newComment.trim()} 
+                    onClick={handleComment} 
+                    className="h-7 sm:h-8 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-medium min-h-[28px] sm:min-h-[32px] bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <SendIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                    {isCommenting ? "Posting..." : "Post"}
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </>
