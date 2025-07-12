@@ -15,12 +15,12 @@ import {
   Bell, 
   Shield, 
   Palette, 
-  Globe, 
-  Mail, 
   Lock, 
-  Trash2,
   Camera,
   Save,
+  Mail,
+  Globe,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import ModeToggle from "./ModeToggle";

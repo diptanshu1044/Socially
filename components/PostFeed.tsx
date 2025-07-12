@@ -90,7 +90,7 @@ export function PostFeed({ initialPosts, initialHasMore, dbUserId }) {
           </div>
         )}
         {!hasMore && posts.length > 0 && (
-          <p className="text-slate-500 dark:text-slate-400 text-sm">You've reached the end!</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">You&apos;ve reached the end!</p>
         )}
       </div>
     </div>

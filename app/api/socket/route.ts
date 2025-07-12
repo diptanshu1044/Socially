@@ -3,6 +3,17 @@ import { Server as NetServer } from 'http';
 import { Server as ServerIO } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 
+// Type definitions for socket server
+interface SocketServer extends NetServer {
+  io?: ServerIO;
+}
+
+interface SocketResponse extends Response {
+  socket: {
+    server: SocketServer;
+  };
+}
+
 const prisma = new PrismaClient();
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -11,12 +22,12 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     // Type assertion to access socket server
-    const res = req as any;
+    const res = req as unknown as SocketResponse;
     
     if (!res.socket?.server?.io) {
       console.log('Setting up socket.io server...');
       
-      const httpServer: NetServer = res.socket.server as any;
+      const httpServer: NetServer = res.socket.server;
       const io = new ServerIO(httpServer, {
         path: '/api/socket',
         addTrailingSlash: false,
