@@ -4,10 +4,10 @@ import { getDbUserId } from '@/actions/user.action';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = params.id;
+    const { id: userId } = await params;
     const currentUserId = await getDbUserId();
 
     if (!currentUserId) {
