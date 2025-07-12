@@ -16,7 +16,7 @@ import { FormatTimeAgo } from "./FormatTimeAgo";
 import { CommentButton } from "./CommentButton";
 import { CommentSection } from "./CommentSection";
 import { Button } from "./ui/button";
-import { MessageCircle, MoreHorizontal } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 
 export interface PostCardProps {

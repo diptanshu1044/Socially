@@ -9,7 +9,6 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Separator } from "./ui/separator";
 import { Switch } from "./ui/switch";
-import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { 
   User, 
@@ -17,14 +16,11 @@ import {
   Shield, 
   Palette, 
   Globe, 
-  Smartphone, 
   Mail, 
   Lock, 
   Trash2,
-  Edit,
   Camera,
   Save,
-  X
 } from "lucide-react";
 import { toast } from "sonner";
 import ModeToggle from "./ModeToggle";
@@ -70,6 +66,7 @@ export function SettingsClient() {
       toast.success("Profile updated successfully");
     } catch (error) {
       toast.error("Failed to update profile");
+      console.error(error);
     } finally {
       setIsLoading(false);
     }

@@ -6,7 +6,6 @@ import { toggleFollow } from "@/actions/user.action";
 import { PostCard } from "@/components/PostCard";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,

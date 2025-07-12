@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "./ui/card";
+import { CardContent, CardHeader } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 
 export const LoadingSkeleton = () => {

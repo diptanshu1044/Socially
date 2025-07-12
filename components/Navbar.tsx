@@ -1,9 +1,9 @@
 "use client";
 
 import  ModeToggle  from "@/components/ModeToggle";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "./ui/button";
-import { Bell, MessageCircle, Home, User, Search, Menu, Settings, LogOut, User as UserIcon, Heart } from "lucide-react";
+import { Bell, MessageCircle, Home, Menu, Settings, LogOut, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
