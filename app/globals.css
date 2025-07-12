@@ -193,41 +193,23 @@
   
   /* Responsive height utilities for navbar accounting */
   .h-screen-navbar {
-    height: calc(100vh - 64px); /* Mobile: navbar height */
-    height: calc(100svh - 64px); /* Safe viewport height for mobile */
+    height: calc(100vh - 136px); /* Mobile: navbar + bottom nav */
   }
   
   @media (min-width: 1024px) {
     .h-screen-navbar {
       height: calc(100vh - 80px); /* Desktop: navbar only */
-      height: calc(100svh - 80px); /* Safe viewport height */
     }
   }
   
   /* Responsive min-height utilities */
   .min-h-screen-navbar {
-    min-height: calc(100vh - 64px); /* Mobile: navbar height */
-    min-height: calc(100svh - 64px); /* Safe viewport height for mobile */
+    min-height: calc(100vh - 136px); /* Mobile: navbar + bottom nav */
   }
   
   @media (min-width: 1024px) {
     .min-h-screen-navbar {
       min-height: calc(100vh - 80px); /* Desktop: navbar only */
-      min-height: calc(100svh - 80px); /* Safe viewport height */
-    }
-  }
-  
-  /* Chat specific utilities */
-  .chat-container {
-    height: calc(100vh - 80px);
-    height: calc(100svh - 80px);
-    min-height: 0;
-  }
-  
-  @media (max-width: 1023px) {
-    .chat-container {
-      height: calc(100vh - 64px);
-      height: calc(100svh - 64px);
     }
   }
   

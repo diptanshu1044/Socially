@@ -86,7 +86,7 @@ export default function ChatPage({
   }
 
   return (
-    <div className="h-screen-navbar flex overflow-hidden bg-white dark:bg-slate-900">
+    <div className="h-[calc(100vh-80px)] flex overflow-hidden">
       {/* Mobile Sidebar */}
       <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300"
            style={{ opacity: showSidebar ? 1 : 0, pointerEvents: showSidebar ? 'auto' : 'none' }}
@@ -136,7 +136,7 @@ export default function ChatPage({
       </div>
 
       {/* Tablet/Desktop Sidebar */}
-      <div className="hidden lg:flex w-80 min-w-[320px] border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex-col">
+      <div className="hidden lg:block w-80 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex flex-col">
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <h2 className="text-xl font-semibold">Messages</h2>
         </div>
@@ -168,8 +168,8 @@ export default function ChatPage({
       </div>
       
       {/* Chat Interface */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900">
-        {/* Chat Navbar - Only show on mobile */}
+      <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900">
+        {/* Chat Navbar - Only show on mobile and when no conversation is selected on desktop */}
         <div className="lg:hidden">
           <ChatNavbar 
             otherUser={otherUser}
@@ -180,7 +180,7 @@ export default function ChatPage({
         
         {/* Desktop Chat Header - Only show on desktop when conversation is selected */}
         {selectedConversationId && (
-          <div className="hidden lg:block p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="hidden lg:block p-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center space-x-3">
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">{otherUser?.name || "Chat"}</h3>
@@ -197,23 +197,21 @@ export default function ChatPage({
         
         {/* Empty State for Desktop */}
         {!selectedConversationId && (
-          <div className="hidden lg:flex items-center justify-center flex-1 bg-white dark:bg-slate-900">
+          <div className="hidden lg:flex items-center justify-center h-full">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Start a Conversation</h3>
-              <p className="text-gray-500 dark:text-gray-400">Select a user from the sidebar to start chatting</p>
+              <p className="text-gray-500">Select a user from the sidebar to start chatting</p>
             </div>
           </div>
         )}
         
         {/* Chat Interface */}
-        {selectedConversationId && (
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <ChatInterface 
-              selectedUserId={selectedUserId} 
-              onOtherUserChange={setOtherUser}
-            />
-          </div>
-        )}
+        <div className="flex-1 overflow-hidden">
+          <ChatInterface 
+            selectedUserId={selectedUserId} 
+            onOtherUserChange={setOtherUser}
+          />
+        </div>
       </div>
     </div>
   );
