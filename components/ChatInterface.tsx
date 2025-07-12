@@ -311,42 +311,61 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
 
   if (!currentConversationId) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Start a Conversation</h3>
-          <p className="text-gray-500">Select a user to start chatting</p>
+      <div className="flex items-center justify-center h-full bg-white dark:bg-slate-900">
+        <div className="text-center p-8">
+          <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Start a Conversation</h3>
+          <p className="text-gray-500 dark:text-gray-400">Select a user to start chatting</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Add loading state for better UX
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-white dark:bg-slate-900">
+        <div className="text-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-500 dark:text-gray-400">Loading conversation...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {isLoading ? (
-          <div className="text-center text-gray-500">Loading messages...</div>
-        ) : messages.length === 0 ? (
-          <div className="text-center text-gray-500">No messages yet</div>
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 min-h-0">
+        {messages.length === 0 ? (
+          <div className="text-center text-gray-500 dark:text-gray-400 py-8">No messages yet</div>
         ) : (
           messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.senderId === currentUserId ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-xs ${message.senderId === currentUserId ? 'order-2' : 'order-1'}`}>
+              <div className={`max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl ${message.senderId === currentUserId ? 'order-2' : 'order-1'}`}>
                 {message.senderId !== currentUserId && (
-                  <Avatar className="w-6 h-6 mb-1">
-                    <AvatarImage src={message.sender?.image || ""} />
-                    <AvatarFallback>
-                      {message.sender?.name?.[0]?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="flex items-center mb-1">
+                    <Avatar className="w-6 h-6 mr-2">
+                      <AvatarImage src={message.sender?.image || ""} />
+                      <AvatarFallback className="text-xs">
+                        {message.sender?.name?.[0]?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {message.sender?.name || "Unknown"}
+                    </span>
+                  </div>
                 )}
               </div>
               
               <div className={`flex flex-col ${message.senderId === currentUserId ? 'order-1' : 'order-2'}`}>
-                <Card className={`max-w-xs ${message.senderId === currentUserId ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <Card className={`max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl ${
+                  message.senderId === currentUserId 
+                    ? 'bg-blue-500 text-white ml-auto' 
+                    : 'bg-gray-100 dark:bg-gray-800 mr-auto'
+                }`}>
                   <CardContent className="p-3">
                     {editingMessage === message.id ? (
                       <div className="space-y-2">
@@ -354,20 +373,20 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
                           value={editContent}
                           onChange={(e) => setEditContent(e.target.value)}
                           onKeyPress={handleKeyPress}
-                          className="text-sm"
+                          className="text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                         />
                         <div className="flex space-x-2">
-                          <Button size="sm" onClick={handleSaveEdit}>
+                          <Button size="sm" onClick={handleSaveEdit} className="bg-green-500 hover:bg-green-600">
                             <Check className="w-3 h-3" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit} className="bg-red-500 hover:bg-red-600 text-white">
                             <X className="w-3 h-3" />
                           </Button>
                         </div>
                       </div>
                     ) : (
                       <div className="group relative">
-                        <p className="text-sm">{message.content}</p>
+                        <p className="text-sm break-words">{message.content}</p>
                         {message.isEdited && (
                           <p className="text-xs opacity-70 mt-1">(edited)</p>
                         )}
@@ -378,17 +397,17 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-white/20"
                               >
                                 <MoreVertical className="w-3 h-3" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent>
+                            <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleEditMessage(message.id, message.content)}>
                                 <Edit className="w-3 h-3 mr-2" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDeleteMessage(message.id)}>
+                              <DropdownMenuItem onClick={() => handleDeleteMessage(message.id)} className="text-red-600">
                                 <Trash2 className="w-3 h-3 mr-2" />
                                 Delete
                               </DropdownMenuItem>
@@ -400,11 +419,15 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
                   </CardContent>
                 </Card>
                 
-                <div className={`flex items-center space-x-1 mt-1 ${message.senderId === currentUserId ? 'justify-end' : 'justify-start'}`}>
-                  <p className="text-xs opacity-70">
-                    {new Date(message.createdAt).toLocaleTimeString()}
+                <div className={`flex items-center space-x-1 mt-1 px-1 ${message.senderId === currentUserId ? 'justify-end' : 'justify-start'}`}>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
-                  {message.senderId === currentUserId && getMessageStatus(message.id)}
+                  {message.senderId === currentUserId && (
+                    <div className="ml-1">
+                      {getMessageStatus(message.id)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -416,23 +439,27 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900">
         <div className="flex space-x-2">
           <Input
             value={newMessage}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1"
+            className="flex-1 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             disabled={!isConnected}
           />
           <Button 
             onClick={handleSendMessage} 
             disabled={!newMessage.trim() || !isConnected}
+            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600"
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
+        {!isConnected && (
+          <p className="text-xs text-red-500 mt-1">Disconnected - messages may not be sent</p>
+        )}
       </div>
     </div>
   );
