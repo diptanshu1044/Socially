@@ -16,7 +16,11 @@ interface User {
   image?: string;
 }
 
-export function UserSelection() {
+interface UserSelectionProps {
+  onUserSelect?: () => void;
+}
+
+export function UserSelection({ onUserSelect }: UserSelectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +55,8 @@ export function UserSelection() {
       if (result.success && result.conversation) {
         toast.success('Conversation started!');
         router.push(`/chat?conversation=${result.conversation.id}`);
+        // Call the callback to close the sidebar
+        onUserSelect?.();
       } else {
         toast.error('Failed to start conversation');
       }

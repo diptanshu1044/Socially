@@ -8,9 +8,10 @@ interface ConversationListProps {
   conversations: Conversation[];
   dbUserId: string | null;
   selectedUserId?: string;
+  onConversationSelect?: () => void;
 }
 
-export function ConversationList({ conversations, dbUserId, selectedUserId }: ConversationListProps) {
+export function ConversationList({ conversations, dbUserId, selectedUserId, onConversationSelect }: ConversationListProps) {
   if (conversations.length === 0) {
     return (
       <div className="p-4 text-center text-gray-500">
@@ -18,6 +19,11 @@ export function ConversationList({ conversations, dbUserId, selectedUserId }: Co
       </div>
     );
   }
+
+  const handleConversationClick = () => {
+    // Call the callback to close the sidebar
+    onConversationSelect?.();
+  };
 
   return (
     <div>
@@ -49,6 +55,7 @@ export function ConversationList({ conversations, dbUserId, selectedUserId }: Co
           <Link
             key={conversation.id}
             href={`/chat?conversation=${conversation.id}`}
+            onClick={handleConversationClick}
             className={`block p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer ${
               selectedUserId === conversation.id ? 'bg-blue-50 dark:bg-blue-900' : ''
             }`}

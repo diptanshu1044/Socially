@@ -72,6 +72,11 @@ export default function ChatPage({
     console.log('Message clicked:', messageId);
   };
 
+  const handleUserOrConversationSelect = () => {
+    // Close the mobile sidebar when a user or conversation is selected
+    setShowSidebar(false);
+  };
+
   if (!isLoaded || isLoading) {
     return <LoadingSkeleton />;
   }
@@ -81,7 +86,7 @@ export default function ChatPage({
   }
 
   return (
-    <div className="h-screen-navbar flex overflow-hidden">
+    <div className="h-[calc(100vh-80px)] flex overflow-hidden">
       {/* Mobile Sidebar */}
       <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300"
            style={{ opacity: showSidebar ? 1 : 0, pointerEvents: showSidebar ? 'auto' : 'none' }}
@@ -104,7 +109,7 @@ export default function ChatPage({
             
             {/* User Selection for starting new conversations */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <UserSelection />
+              <UserSelection onUserSelect={handleUserOrConversationSelect} />
             </div>
             
             {/* Search Messages */}
@@ -123,6 +128,7 @@ export default function ChatPage({
                 conversations={conversations} 
                 dbUserId={dbUserId}
                 selectedUserId={selectedConversationId}
+                onConversationSelect={handleUserOrConversationSelect}
               />
             </div>
           </div>
@@ -137,7 +143,7 @@ export default function ChatPage({
         
         {/* User Selection for starting new conversations */}
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <UserSelection />
+          <UserSelection onUserSelect={handleUserOrConversationSelect} />
         </div>
         
         {/* Search Messages */}
@@ -156,6 +162,7 @@ export default function ChatPage({
             conversations={conversations} 
             dbUserId={dbUserId}
             selectedUserId={selectedConversationId}
+            onConversationSelect={handleUserOrConversationSelect}
           />
         </div>
       </div>
