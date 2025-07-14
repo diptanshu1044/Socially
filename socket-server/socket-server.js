@@ -110,6 +110,7 @@ const io = new Server(httpServer, {
 // Store typing states
 const typingUsers = new Map();
 const userSockets = new Map();
+const onlineUsers = new Set();
 
 // Middleware for authentication
 io.use(async (socket, next) => {
@@ -164,10 +165,17 @@ io.on('connection', (socket) => {
     
     socket.data.userId = userId;
     userSockets.set(userId, socket.id);
+    onlineUsers.add(userId);
     socket.join(`user:${userId}`);
     if (isProduction) {
       console.log(`User ${userId} connected successfully with socket: ${socket.id}`);
     }
+    
+    // Send current online users list to the newly connected user
+    socket.emit('online-users', Array.from(onlineUsers));
+    
+    // Notify other users that this user is online
+    socket.broadcast.emit('user-online', { userId });
     
     // Emit success confirmation to client
     socket.emit('user-id-set', { userId, socketId: socket.id });
@@ -212,6 +220,43 @@ io.on('connection', (socket) => {
       socket.join(conversationId);
       if (isProduction) {
         console.log(`User ${userId} joined conversation: ${conversationId}`);
+      }
+      
+      // Get conversation participants and send their online status
+      try {
+        const conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+          include: {
+            participants: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        if (conversation) {
+          // Send online status of all participants to the joining user
+          const participantsStatus = conversation.participants.map(participant => ({
+            userId: participant.user.id,
+            isOnline: onlineUsers.has(participant.user.id),
+            user: participant.user,
+          }));
+          
+          socket.emit('conversation-participants-status', {
+            conversationId,
+            participants: participantsStatus,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching conversation participants status:', error);
       }
       
       // Emit success confirmation
@@ -534,9 +579,38 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle user status requests
+  socket.on('get-user-status', (targetUserId) => {
+    try {
+    const userId = socket.data.userId;
+    
+    if (!userId) {
+      socket.emit('error', { message: 'User not authenticated' });
+      return;
+    }
+    
+    const isOnline = onlineUsers.has(targetUserId);
+    socket.emit('user-status', { 
+      userId: targetUserId, 
+      isOnline 
+    });
+    
+    } catch (error) {
+      console.error('Error getting user status:', error);
+      socket.emit('error', { message: 'Failed to get user status' });
+    }
+  });
+
   socket.on('disconnect', () => {
     const userId = socket.data.userId;
     console.log(`Client disconnected: ${socket.id} (User: ${userId})`);
+    
+    // Remove user from online users and notify others
+    if (userId) {
+      onlineUsers.delete(userId);
+      // Notify other users that this user is offline
+      socket.broadcast.emit('user-offline', { userId });
+    }
     
     // Remove user from typing indicators
     typingUsers.forEach((users, conversationId) => {
