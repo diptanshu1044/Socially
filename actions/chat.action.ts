@@ -327,6 +327,54 @@ export const getConversationMessages = async (conversationId: string, page = 1, 
   }
 };
 
+export const getConversationDetails = async (conversationId: string) => {
+  try {
+    const currentUserId = await getDbUserId();
+    if (!currentUserId) return null;
+
+    // Verify user is part of the conversation
+    const participant = await prisma.conversationParticipant.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: currentUserId,
+        },
+      },
+    });
+
+    if (!participant) throw new Error("User not part of conversation");
+
+    return await getCachedOrFetch(
+      `conversation:${conversationId}`,
+      async () => {
+        const conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+          include: {
+            participants: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        return conversation;
+      },
+      5 * 60 * 1000 // 5 minutes cache for conversation details
+    );
+  } catch (error) {
+    console.error("Error fetching conversation details:", error);
+    return null;
+  }
+};
+
 export const editMessage = async (messageId: string, newContent: string) => {
   try {
     const currentUserId = await getDbUserId();

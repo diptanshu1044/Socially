@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getConversationMessages, createConversation } from '@/actions/chat.action';
+import { getConversationDetails } from '@/actions/chat.action';
 import { ChatMessage } from '@/types/socket.types';
 import { useChat } from '@/components/ChatProvider';
 import { ChatHeader } from './ChatHeader';
@@ -46,8 +47,18 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
   const loadMessages = useCallback(async (convId: string) => {
     setIsLoading(true);
     try {
-      const result = await getConversationMessages(convId);
+      const [result, conversationDetails] = await Promise.all([
+        getConversationMessages(convId),
+        getConversationDetails(convId)
+      ]);
       setMessages(result.messages);
+      
+      // Set other user information from the conversation
+      if (conversationDetails) {
+        const otherParticipant = conversationDetails.participants.find(p => p.userId !== currentUserId)?.user;
+        setOtherUser(otherParticipant || null);
+        onOtherUserChange?.(otherParticipant || null);
+      }
       
       // Mark messages as read
       const unreadMessageIds = result.messages
@@ -63,7 +74,7 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
     } finally {
       setIsLoading(false);
     }
-  }, [currentUserId, markMessagesAsRead]);
+  }, [currentUserId, markMessagesAsRead, onOtherUserChange]);
 
   const handleCreateConversation = useCallback(async (userId: string) => {
     try {
