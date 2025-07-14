@@ -145,6 +145,69 @@
   * {
     -webkit-overflow-scrolling: touch;
   }
+  
+  /* Chat-specific scrolling improvements */
+  .chat-messages-container {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    height: 100%;
+    min-height: 200px; /* Ensure minimum height for scrolling */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px; /* Add padding to account for scroll bar */
+    /* Ensure mouse wheel scrolling works */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    /* Enable mouse wheel events */
+    pointer-events: auto;
+    user-select: none;
+    /* Debug: add border to see container */
+    border: 1px solid transparent;
+  }
+  
+  /* Prevent horizontal scroll in chat */
+  .chat-messages-container * {
+    max-width: 100%;
+    word-wrap: break-word;
+  }
+  
+  /* Custom scrollbar styling */
+  .chat-messages-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .chat-messages-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .chat-messages-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+  
+  .chat-messages-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .chat-messages-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .chat-messages-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Ensure scroll container can receive mouse events */
+  .chat-messages-container {
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Improve mouse wheel scrolling on different browsers */
+  .chat-messages-container {
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+  }
 }
 
 @theme {

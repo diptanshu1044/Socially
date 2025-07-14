@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Paperclip, Smile } from 'lucide-react';
+import { Send, Paperclip } from 'lucide-react';
 import { useChat } from '@/components/ChatProvider';
+import { EmojiPicker } from './EmojiPicker';
 
 interface MessageInputProps {
   conversationId: string | null;
@@ -19,6 +20,24 @@ export function MessageInput({ conversationId, onSendMessage, disabled }: Messag
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const { sendTypingIndicator } = useChat();
+
+  const handleEmojiSelect = (emoji: string) => {
+    const cursorPosition = textareaRef.current?.selectionStart || 0;
+    const textBeforeCursor = message.slice(0, cursorPosition);
+    const textAfterCursor = message.slice(cursorPosition);
+    const newMessage = textBeforeCursor + emoji + textAfterCursor;
+    
+    setMessage(newMessage);
+    
+    // Set cursor position after emoji
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newCursorPosition = cursorPosition + emoji.length;
+        textareaRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
 
   const handleSendMessage = () => {
     if (!message.trim() || !conversationId || disabled) return;
@@ -106,7 +125,7 @@ export function MessageInput({ conversationId, onSendMessage, disabled }: Messag
   }
 
   return (
-    <div className="p-4 message-input-spacing safe-padding border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+    <div className="p-4 pl-6 message-input-spacing safe-padding border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
       <div className="flex items-end space-x-2">
         <div className="flex-1 flex items-end space-x-2">
           <Textarea
@@ -128,14 +147,7 @@ export function MessageInput({ conversationId, onSendMessage, disabled }: Messag
             >
               <Paperclip className="w-4 h-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-              disabled={disabled}
-            >
-              <Smile className="w-4 h-4" />
-            </Button>
+            <EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={disabled} />
           </div>
         </div>
         <Button

@@ -1,42 +1,59 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
 import { ChatMessage } from '@/types/socket.types';
 import { MessageItem } from './MessageItem';
 import { TypingIndicator } from './TypingIndicator';
 import { useChat } from '@/components/ChatProvider';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { useRef, useEffect } from 'react';
 
 interface MessageListProps {
   messages: ChatMessage[];
   currentUserId: string | null;
   conversationId: string | null;
   isLoading: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
+  isLoadingMore: boolean;
 }
 
 export function MessageList({ 
   messages, 
   currentUserId, 
   conversationId, 
-  isLoading 
+  isLoading,
+  hasMore,
+  onLoadMore,
+  isLoadingMore
 }: MessageListProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { typingUsers } = useChat();
-
-  // Auto-scroll to bottom
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Get typing users for current conversation
   const currentTypingUsers = (conversationId ? typingUsers.get(conversationId) : undefined) ?? new Set();
 
+  // Ensure scroll container is properly configured for mouse wheel
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    // Add wheel event listener for debugging
+    const handleWheel = (e: WheelEvent) => {
+      console.log('Wheel event detected:', e.deltaY);
+      // Don't prevent default - let natural scrolling work
+    };
+
+    scrollContainer.addEventListener('wheel', handleWheel);
+    
+    return () => {
+      scrollContainer.removeEventListener('wheel', handleWheel);
+    };
+  }, [messages.length, isLoading]);
+
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto p-4">
+      <div ref={scrollContainerRef} className="h-full overflow-y-auto p-4 chat-messages-container">
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex space-x-3 animate-pulse">
@@ -54,7 +71,7 @@ export function MessageList({
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto p-4">
+      <div ref={scrollContainerRef} className="h-full overflow-y-auto p-4 chat-messages-container">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="text-gray-400 dark:text-gray-500 mb-4">
@@ -75,25 +92,46 @@ export function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {messages.map((message) => (
-        <MessageItem
-          key={message.id}
-          message={message}
-          isOwnMessage={message.senderId === currentUserId}
-        />
-      ))}
-      
-      {/* Typing Indicator */}
-      {currentTypingUsers.size > 0 && (
-        <TypingIndicator 
-          typingUsers={Array.from(currentTypingUsers)}
-          isOwnTyping={currentTypingUsers.has(currentUserId || '')}
-        />
-      )}
-      
-      {/* Scroll anchor */}
-      <div ref={messagesEndRef} />
+    <div ref={scrollContainerRef} className="h-full overflow-y-auto p-4 chat-messages-container">
+      <div className="space-y-4">
+        {/* Load more messages button */}
+        {hasMore && (
+          <div className="flex justify-center py-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+              className="flex items-center space-x-2"
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <span>Load Previous Messages</span>
+              )}
+            </Button>
+          </div>
+        )}
+        
+        {messages.map((message) => (
+          <MessageItem
+            key={message.id}
+            message={message}
+            isOwnMessage={message.senderId === currentUserId}
+          />
+        ))}
+        
+        {/* Typing Indicator */}
+        {currentTypingUsers.size > 0 && (
+          <TypingIndicator 
+            typingUsers={Array.from(currentTypingUsers)}
+            isOwnTyping={currentTypingUsers.has(currentUserId || '')}
+          />
+        )}
+      </div>
     </div>
   );
 } 

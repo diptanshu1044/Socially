@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getConversations } from "@/actions/chat.action";
 import { getDbUserId } from "@/actions/user.action";
 import { useAuth } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { UserSelection } from "@/components/chat/UserSelection";
 import { ChatSearch } from "@/components/chat/ChatSearch";
@@ -27,6 +27,10 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   
+  // Get conversation ID from URL
+  const searchParams = useSearchParams();
+  const urlConversationId = searchParams.get('conversation');
+  
   const { isConnected } = useChat();
 
   useEffect(() => {
@@ -46,6 +50,11 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
         
         setConversations(conversationsData);
         setDbUserId(dbUserIdData);
+        
+        // Set selected conversation from URL if available
+        if (urlConversationId) {
+          setSelectedConversationId(urlConversationId);
+        }
       } catch (error) {
         console.error('Error loading chat data:', error);
       } finally {
@@ -54,7 +63,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
     };
 
     loadData();
-  }, [userId, isLoaded, router]);
+  }, [userId, isLoaded, router, urlConversationId]);
 
   const handleConversationSelect = (conversationId: string) => {
     setSelectedConversationId(conversationId);
@@ -74,7 +83,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   }
 
   return (
-    <div className="h-screen-navbar flex overflow-hidden">
+    <div className="h-screen-navbar flex">
       {/* Mobile Sidebar Overlay */}
       <div 
         className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300"
@@ -124,7 +133,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             )}
             
             {/* Conversation List */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto chat-messages-container">
               <ConversationList 
                 conversations={conversations} 
                 dbUserId={dbUserId}
@@ -160,7 +169,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
         )}
         
         {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto chat-messages-container">
           <ConversationList 
             conversations={conversations} 
             dbUserId={dbUserId}
@@ -171,7 +180,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       </div>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900">
+      <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900">
         {/* Mobile Header */}
         <div className="lg:hidden p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center space-x-3">
@@ -183,13 +192,17 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
               <Menu className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h3 className="font-semibold">Chat</h3>
+              <h3 className="font-semibold">
+                {selectedConversationId ? 'Chat' : 'Messages'}
+              </h3>
             </div>
           </div>
         </div>
         
         {/* Chat Content */}
-        {children}
+        <div className="flex-1 min-h-0">
+          {children}
+        </div>
       </div>
     </div>
   );

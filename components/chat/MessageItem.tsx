@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useChat } from '@/components/ChatProvider';
+import { renderEmojis } from '@/lib/utils';
 
 interface MessageItemProps {
   message: ChatMessage;
@@ -120,7 +121,7 @@ export function MessageItem({ message, isOwnMessage }: MessageItemProps) {
                   ? 'bg-blue-500 text-white' 
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
               }`}>
-                <p className="text-sm break-words">{message.content}</p>
+                <p className="text-sm break-words whitespace-pre-wrap">{renderEmojis(message.content)}</p>
                 {message.isEdited && (
                   <p className="text-xs opacity-70 mt-1">(edited)</p>
                 )}

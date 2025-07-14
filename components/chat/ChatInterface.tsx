@@ -27,6 +27,9 @@ interface ChatInterfaceProps {
 export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOnlineChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<User | null>(null);
   
@@ -46,6 +49,13 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
   // Get conversation ID from URL or selected user
   const urlConversationId = searchParams.get('conversation');
   const currentConversationId = urlConversationId || conversationId;
+  
+  // Update conversation ID when URL changes
+  useEffect(() => {
+    if (urlConversationId && urlConversationId !== conversationId) {
+      setConversationId(urlConversationId);
+    }
+  }, [urlConversationId, conversationId]);
 
   // Get other user's online status
   const otherUserOnline = otherUser ? onlineUsers.has(otherUser.id) : false;
@@ -68,37 +78,59 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
     return () => clearInterval(interval);
   }, [otherUser, socket, isConnected, getUserStatus]);
 
-  const loadMessages = useCallback(async (convId: string) => {
-    setIsLoading(true);
+  const loadMessages = useCallback(async (convId: string, page = 1, append = false) => {
+    if (page === 1) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+    
     try {
       const [result, conversationDetails] = await Promise.all([
-        getConversationMessages(convId),
-        getConversationDetails(convId)
+        getConversationMessages(convId, page, 20), // Load 20 messages per page
+        page === 1 ? getConversationDetails(convId) : Promise.resolve(null)
       ]);
-      setMessages(result.messages);
       
-      // Set other user information from the conversation
-      if (conversationDetails) {
+      if (append) {
+        setMessages(prev => [...result.messages, ...prev]);
+      } else {
+        setMessages(result.messages);
+      }
+      
+      setHasMore(result.hasMore);
+      setCurrentPage(page);
+      
+      // Set other user information from the conversation (only on first load)
+      if (page === 1 && conversationDetails) {
         const otherParticipant = conversationDetails.participants.find(p => p.userId !== currentUserId)?.user;
         setOtherUser(otherParticipant || null);
         onOtherUserChange?.(otherParticipant || null);
       }
       
-      // Mark messages as read
-      const unreadMessageIds = result.messages
-        .filter(msg => msg.senderId !== currentUserId)
-        .map(msg => msg.id);
-      
-      if (unreadMessageIds.length > 0) {
-        markMessagesAsRead(convId, unreadMessageIds);
+      // Mark messages as read (only for new messages, not when loading more)
+      if (page === 1) {
+        const unreadMessageIds = result.messages
+          .filter(msg => msg.senderId !== currentUserId)
+          .map(msg => msg.id);
+        
+        if (unreadMessageIds.length > 0) {
+          markMessagesAsRead(convId, unreadMessageIds);
+        }
       }
     } catch (error) {
       console.error('Failed to load messages:', error);
       toast.error('Failed to load messages');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   }, [currentUserId, markMessagesAsRead, onOtherUserChange]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!conversationId || isLoadingMore || !hasMore) return;
+    
+    await loadMessages(conversationId, currentPage + 1, true);
+  }, [conversationId, isLoadingMore, hasMore, currentPage, loadMessages]);
 
   const handleCreateConversation = useCallback(async (userId: string) => {
     try {
@@ -131,7 +163,9 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
       handleCreateConversation(selectedUserId);
     } else if (currentConversationId) {
       // Load existing conversation
-      loadMessages(currentConversationId);
+      setCurrentPage(1);
+      setHasMore(false);
+      loadMessages(currentConversationId, 1, false);
       joinConversation(currentConversationId);
     }
 
@@ -218,6 +252,29 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
     }
   };
 
+  // Show fallback state when no conversation is selected
+  if (!currentConversationId) {
+    return (
+      <div className="flex flex-col h-full bg-white dark:bg-slate-900">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <div className="text-gray-400 dark:text-gray-500 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              Select a conversation
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Choose a conversation from the sidebar to start messaging
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900">
       {/* Desktop Header */}
@@ -229,12 +286,15 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
       </div>
       
       {/* Message List */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0">
         <MessageList 
           messages={messages}
           currentUserId={currentUserId}
           conversationId={currentConversationId}
           isLoading={isLoading}
+          hasMore={hasMore}
+          onLoadMore={handleLoadMore}
+          isLoadingMore={isLoadingMore}
         />
       </div>
       
