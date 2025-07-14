@@ -32,6 +32,8 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
   const [currentPage, setCurrentPage] = useState(1);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<User | null>(null);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
+  const [lastUserMessageId, setLastUserMessageId] = useState<string | null>(null);
   
   const searchParams = useSearchParams();
   const { 
@@ -95,6 +97,8 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
         setMessages(prev => [...result.messages, ...prev]);
       } else {
         setMessages(result.messages);
+        // Scroll to bottom when new conversation opens (first page load)
+        setShouldScrollToBottom(true);
       }
       
       setHasMore(result.hasMore);
@@ -211,6 +215,12 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
       
       setMessages(prev => [...prev, newMessage]);
       
+      // Scroll to bottom only if the user sent the message
+      if (data.senderId === currentUserId) {
+        setShouldScrollToBottom(true);
+        setLastUserMessageId(data.id);
+      }
+      
       // Mark messages as read if conversation is active
       if (currentConversationId === data.conversationId) {
         markMessagesAsRead(currentConversationId, [data.id]);
@@ -246,10 +256,16 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
     try {
       console.log('Sending message via socket:', messageContent, 'to conversation:', currentConversationId);
       sendSocketMessage(currentConversationId, messageContent);
+      // Scroll to bottom when user sends a message
+      setShouldScrollToBottom(true);
     } catch (error) {
       console.error('Failed to send message:', error);
       toast.error('Failed to send message');
     }
+  };
+
+  const handleScrollToBottomComplete = () => {
+    setShouldScrollToBottom(false);
   };
 
   // Show fallback state when no conversation is selected
@@ -295,6 +311,8 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
           hasMore={hasMore}
           onLoadMore={handleLoadMore}
           isLoadingMore={isLoadingMore}
+          shouldScrollToBottom={shouldScrollToBottom}
+          onScrollToBottomComplete={handleScrollToBottomComplete}
         />
       </div>
       

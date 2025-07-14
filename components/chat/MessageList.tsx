@@ -16,6 +16,8 @@ interface MessageListProps {
   hasMore: boolean;
   onLoadMore: () => void;
   isLoadingMore: boolean;
+  shouldScrollToBottom?: boolean;
+  onScrollToBottomComplete?: () => void;
 }
 
 export function MessageList({ 
@@ -25,13 +27,29 @@ export function MessageList({
   isLoading,
   hasMore,
   onLoadMore,
-  isLoadingMore
+  isLoadingMore,
+  shouldScrollToBottom = false,
+  onScrollToBottomComplete
 }: MessageListProps) {
   const { typingUsers } = useChat();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Get typing users for current conversation
   const currentTypingUsers = (conversationId ? typingUsers.get(conversationId) : undefined) ?? new Set();
+
+  // Scroll to bottom when new chat opens or user sends message
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer || !shouldScrollToBottom) return;
+
+    // Scroll to bottom
+    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    
+    // Notify parent that scroll is complete
+    if (onScrollToBottomComplete) {
+      onScrollToBottomComplete();
+    }
+  }, [shouldScrollToBottom, onScrollToBottomComplete]);
 
   // Ensure scroll container is properly configured for mouse wheel
   useEffect(() => {
