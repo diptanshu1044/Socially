@@ -108,22 +108,22 @@ export function MessageInput({ conversationId, onSendMessage, disabled }: Messag
   return (
     <div className="p-4 message-input-spacing safe-padding border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
       <div className="flex items-end space-x-2">
-        <div className="flex-1 relative">
+        <div className="flex-1 flex items-end space-x-2">
           <Textarea
             ref={textareaRef}
             value={message}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="min-h-[40px] max-h-[120px] resize-none pr-12"
+            className="min-h-[40px] max-h-[120px] resize-none flex-1"
             disabled={disabled}
             rows={1}
           />
-          <div className="absolute right-2 bottom-2 flex items-center space-x-1">
+          <div className="flex items-center space-x-1 flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
               disabled={disabled}
             >
               <Paperclip className="w-4 h-4" />
@@ -131,7 +131,7 @@ export function MessageInput({ conversationId, onSendMessage, disabled }: Messag
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
               disabled={disabled}
             >
               <Smile className="w-4 h-4" />
