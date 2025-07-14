@@ -10,6 +10,8 @@ import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { toast } from 'sonner';
+import { Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface User {
   id: string;
@@ -299,6 +301,49 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
           otherUser={otherUser}
           isConnected={otherUserOnline}
         />
+      </div>
+      
+      {/* Mobile Header */}
+      <div className="lg:hidden p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              // Trigger the layout's sidebar toggle
+              const event = new CustomEvent('toggleSidebar');
+              window.dispatchEvent(event);
+            }}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          <div className="flex-1">
+            {otherUser ? (
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    {otherUser.name?.[0]?.toUpperCase() || "U"}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    {otherUser.name}
+                  </h3>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full ${otherUserOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {otherUserOnline ? 'Online' : 'Offline'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <h3 className="font-semibold">
+                Chat
+              </h3>
+            )}
+          </div>
+        </div>
       </div>
       
       {/* Message List */}

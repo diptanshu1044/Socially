@@ -26,6 +26,8 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [otherUser, setOtherUser] = useState<any>(null);
+  const [otherUserOnline, setOtherUserOnline] = useState(false);
   
   // Get conversation ID from URL
   const searchParams = useSearchParams();
@@ -73,6 +75,19 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   const handleUserSelect = () => {
     setShowSidebar(false);
   };
+
+  // Listen for sidebar toggle events from ChatInterface
+  useEffect(() => {
+    const handleToggleSidebar = () => {
+      setShowSidebar(prev => !prev);
+    };
+
+    window.addEventListener('toggleSidebar', handleToggleSidebar);
+    
+    return () => {
+      window.removeEventListener('toggleSidebar', handleToggleSidebar);
+    };
+  }, []);
 
   if (!isLoaded || isLoading) {
     return <LoadingSkeleton />;
@@ -181,23 +196,25 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900">
-        {/* Mobile Header */}
-        <div className="lg:hidden p-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSidebar(true)}
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
-            <div className="flex-1">
-              <h3 className="font-semibold">
-                {selectedConversationId ? 'Chat' : 'Messages'}
-              </h3>
+        {/* Mobile Header - Only show when no conversation is selected */}
+        {!selectedConversationId && (
+          <div className="lg:hidden p-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSidebar(true)}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+              <div className="flex-1">
+                <h3 className="font-semibold">
+                  Messages
+                </h3>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         {/* Chat Content */}
         <div className="flex-1 min-h-0">
