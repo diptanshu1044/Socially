@@ -202,6 +202,40 @@
     }
   }
   
+  /* Dynamic bottom spacing based on screen size */
+  .chat-bottom-spacing {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  @media (min-width: 768px) {
+    .chat-bottom-spacing {
+      padding-bottom: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .chat-bottom-spacing {
+      padding-bottom: 1rem;
+    }
+  }
+  
+  /* Responsive message input spacing */
+  .message-input-spacing {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom) + 0.5rem);
+  }
+  
+  @media (min-width: 768px) {
+    .message-input-spacing {
+      padding-bottom: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .message-input-spacing {
+      padding-bottom: 1rem;
+    }
+  }
+  
   /* Responsive min-height utilities */
   .min-h-screen-navbar {
     min-height: calc(100vh - 136px); /* Mobile: navbar + bottom nav */
