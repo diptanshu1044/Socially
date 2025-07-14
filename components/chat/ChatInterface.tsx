@@ -12,6 +12,7 @@ import { MessageInput } from './MessageInput';
 import { toast } from 'sonner';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface User {
   id: string;
@@ -320,11 +321,12 @@ export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOn
           <div className="flex-1">
             {otherUser ? (
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={otherUser.image || ""} />
+                  <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-xs">
                     {otherUser.name?.[0]?.toUpperCase() || "U"}
-                  </span>
-                </div>
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                     {otherUser.name}
