@@ -20,6 +20,8 @@ interface ChatContextType {
   currentUserId: string | null;
   typingUsers: Map<string, Set<string>>;
   messageStatus: Map<string, 'sending' | 'sent' | 'delivered' | 'read'>;
+  getUserStatus: (userId: string) => void;
+  onlineUsers: Set<string>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -31,6 +33,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [typingUsers, setTypingUsers] = useState<Map<string, Set<string>>>(new Map());
   const [messageStatus, setMessageStatus] = useState<Map<string, 'sending' | 'sent' | 'delivered' | 'read'>>(new Map());
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [isUserIdSet, setIsUserIdSet] = useState(false);
   const { user } = useUser();
   const { getToken } = useAuth();
@@ -206,6 +209,52 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           });
         });
 
+        socketInstance.on('user-online', (data) => {
+          const { userId } = data;
+          setOnlineUsers(prev => new Set([...prev, userId]));
+        });
+
+        socketInstance.on('user-offline', (data) => {
+          const { userId } = data;
+          setOnlineUsers(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(userId);
+            return newSet;
+          });
+        });
+
+        socketInstance.on('user-status', (data) => {
+          const { userId, isOnline } = data;
+          setOnlineUsers(prev => {
+            const newSet = new Set(prev);
+            if (isOnline) {
+              newSet.add(userId);
+            } else {
+              newSet.delete(userId);
+            }
+            return newSet;
+          });
+        });
+
+        socketInstance.on('online-users', (onlineUsersList) => {
+          setOnlineUsers(new Set(onlineUsersList));
+        });
+
+        socketInstance.on('conversation-participants-status', (data) => {
+          const { participants } = data;
+          setOnlineUsers(prev => {
+            const newSet = new Set(prev);
+            participants.forEach((participant: any) => {
+              if (participant.isOnline) {
+                newSet.add(participant.userId);
+              } else {
+                newSet.delete(participant.userId);
+              }
+            });
+            return newSet;
+          });
+        });
+
         socketInstance.on('message-sent', (data) => {
           const { messageId } = data;
           setMessageStatus(prev => {
@@ -346,6 +395,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [socket, isUserIdSet]);
 
+  const getUserStatus = useCallback((userId: string) => {
+    if (socket && isUserIdSet) {
+      socket.emit('get-user-status', userId);
+    }
+  }, [socket, isUserIdSet]);
+
   const value: ChatContextType = {
     socket,
     isConnected,
@@ -361,6 +416,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     currentUserId,
     typingUsers,
     messageStatus,
+    getUserStatus,
+    onlineUsers,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

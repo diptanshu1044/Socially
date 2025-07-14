@@ -21,9 +21,10 @@ interface User {
 interface ChatInterfaceProps {
   selectedUserId?: string;
   onOtherUserChange?: (user: User | null) => void;
+  onOtherUserOnlineChange?: (isOnline: boolean) => void;
 }
 
-export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfaceProps) {
+export function ChatInterface({ selectedUserId, onOtherUserChange, onOtherUserOnlineChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -37,12 +38,35 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
     leaveConversation, 
     sendMessage: sendSocketMessage, 
     markMessagesAsRead,
-    currentUserId
+    currentUserId,
+    onlineUsers,
+    getUserStatus
   } = useChat();
 
   // Get conversation ID from URL or selected user
   const urlConversationId = searchParams.get('conversation');
   const currentConversationId = urlConversationId || conversationId;
+
+  // Get other user's online status
+  const otherUserOnline = otherUser ? onlineUsers.has(otherUser.id) : false;
+
+  // Check other user's status when they are set
+  useEffect(() => {
+    if (otherUser && socket && isConnected) {
+      getUserStatus(otherUser.id);
+    }
+  }, [otherUser, socket, isConnected, getUserStatus]);
+
+  // Periodic status check for the other user
+  useEffect(() => {
+    if (!otherUser || !socket || !isConnected) return;
+
+    const interval = setInterval(() => {
+      getUserStatus(otherUser.id);
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [otherUser, socket, isConnected, getUserStatus]);
 
   const loadMessages = useCallback(async (convId: string) => {
     setIsLoading(true);
@@ -125,6 +149,13 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
     }
   }, [otherUser, onOtherUserChange]);
 
+  // Notify parent component when other user online status changes
+  useEffect(() => {
+    if (onOtherUserOnlineChange) {
+      onOtherUserOnlineChange(otherUserOnline);
+    }
+  }, [otherUserOnline, onOtherUserOnlineChange]);
+
   // Socket event listeners
   useEffect(() => {
     if (!socket) return;
@@ -193,7 +224,7 @@ export function ChatInterface({ selectedUserId, onOtherUserChange }: ChatInterfa
       <div className="hidden lg:block">
         <ChatHeader 
           otherUser={otherUser}
-          isConnected={isConnected}
+          isConnected={otherUserOnline}
         />
       </div>
       

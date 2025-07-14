@@ -19,6 +19,7 @@ export default function ChatPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [otherUser, setOtherUser] = useState<User | null>(null);
+  const [otherUserOnline, setOtherUserOnline] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -44,6 +45,7 @@ export default function ChatPage() {
     <ChatInterface 
       selectedUserId={selectedUserId || undefined}
       onOtherUserChange={setOtherUser}
+      onOtherUserOnlineChange={setOtherUserOnline}
     />
   );
 } 

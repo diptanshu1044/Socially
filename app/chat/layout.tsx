@@ -184,12 +184,6 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             </Button>
             <div className="flex-1">
               <h3 className="font-semibold">Chat</h3>
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {isConnected ? 'Connected' : 'Disconnected'}
-                </p>
-              </div>
             </div>
           </div>
         </div>
