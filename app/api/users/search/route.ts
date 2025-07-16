@@ -33,6 +33,15 @@ export async function GET(request: NextRequest) {
         name: true,
         username: true,
         image: true,
+        bio: true,
+        location: true,
+        _count: {
+          select: {
+            followers: true,
+            following: true,
+            posts: true,
+          },
+        },
       },
       take: 10,
       orderBy: {
