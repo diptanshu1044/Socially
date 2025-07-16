@@ -3,7 +3,7 @@
 import  ModeToggle  from "@/components/ModeToggle";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "./ui/button";
-import { Bell, MessageCircle, Home, Menu, Settings, LogOut, User as UserIcon } from "lucide-react";
+import { Bell, MessageCircle, Home, Menu, Settings, LogOut, User as UserIcon, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
@@ -99,6 +99,12 @@ export function Navbar() {
 
             {/* Right side - Actions */}
             <div className="flex items-center space-x-4">
+              <Link href="/find-friends">
+                <Button variant="ghost" size="sm">
+                  <Users className="w-4 h-4" />
+                </Button>
+              </Link>
+              
               <Link href="/chat">
                 <Button variant="ghost" size="sm" className="relative">
                   <MessageCircle className="w-4 h-4" />
@@ -165,6 +171,12 @@ export function Navbar() {
                           {messageCount > 9 ? '9+' : messageCount}
                         </span>
                       )}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/find-friends" className="flex items-center">
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>Find Friends</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -245,6 +257,10 @@ export function Navbar() {
                         </span>
                       )}
                     </Link>
+                    <Link href="/find-friends" onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <Users className="w-5 h-5" />
+                      <span>Find Friends</span>
+                    </Link>
                     <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
                     <Link href="/settings" onClick={handleNavigation} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full text-left">
                       <Settings className="w-5 h-5" />
@@ -288,6 +304,11 @@ export function Navbar() {
               </span>
             )}
             <span className="text-xs">Alerts</span>
+          </Link>
+          
+          <Link href="/find-friends" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] justify-center">
+            <Users className="w-6 h-6 mb-1" />
+            <span className="text-xs">Friends</span>
           </Link>
           
           <Link href={currentUser ? `/profile/${currentUser.username}` : "#"} className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] justify-center">
