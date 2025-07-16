@@ -156,11 +156,6 @@ export default function FindFriendsPage() {
           {/* Header */}
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Find Friends</h1>
-            {pagination && !isSearching && (
-              <p className="text-sm text-muted-foreground">
-                {pagination.total} members • Page {pagination.page} of {pagination.totalPages}
-              </p>
-            )}
           </div>
 
           {/* Search Bar */}
@@ -245,11 +240,6 @@ export default function FindFriendsPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Find Friends</h1>
-            {pagination && !isSearching && (
-              <p className="text-muted-foreground">
-                {pagination.total} members • Page {pagination.page} of {pagination.totalPages}
-              </p>
-            )}
           </div>
 
           {/* Search Bar */}
