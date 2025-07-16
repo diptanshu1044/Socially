@@ -308,7 +308,7 @@ export function Navbar() {
           
           <Link href="/find-friends" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] justify-center">
             <Users className="w-6 h-6 mb-1" />
-            <span className="text-xs">Friends</span>
+            <span className="text-xs">Find Friends</span>
           </Link>
           
           <Link href={currentUser ? `/profile/${currentUser.username}` : "#"} className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] justify-center">

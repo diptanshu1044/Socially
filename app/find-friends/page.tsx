@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { UserCard } from "@/components/UserCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,9 @@ export default function FindFriendsPage() {
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Ref for search input
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch paginated users
   const fetchUsers = useCallback(async (page: number = 1) => {
@@ -107,6 +110,38 @@ export default function FindFriendsPage() {
     fetchUsers(currentPage);
   }, [currentPage, fetchUsers]);
 
+  // Focus search bar and type if user starts typing anywhere
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if focus is in a textarea or contenteditable (but NOT input)
+      const active = document.activeElement;
+      if (
+        active &&
+        (active.tagName === 'TEXTAREA' || (active as HTMLElement).isContentEditable)
+      ) {
+        return;
+      }
+      // Printable characters
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          setSearchTerm(prev => prev + e.key);
+          e.preventDefault();
+        }
+      }
+      // Backspace
+      if (e.key === 'Backspace' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          setSearchTerm(prev => prev.slice(0, -1));
+          e.preventDefault();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Handle page change
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -162,6 +197,7 @@ export default function FindFriendsPage() {
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
+              ref={searchInputRef}
               placeholder="Search users by name or username..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -246,6 +282,7 @@ export default function FindFriendsPage() {
           <div className="relative mb-8 max-w-md mx-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
+              ref={searchInputRef}
               placeholder="Search users by name or username..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
