@@ -1,36 +1,37 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
-import { getDbUserId } from "./user.action";
 import { prisma } from "@/lib/prisma";
+import { getDbUserId } from "./user.action";
+import { createNotificationWithSocket } from "./notification.action";
+import { revalidatePath } from "next/cache";
 
 export const createPost = async (content: string, imageUrl?: string) => {
   try {
     const userId = await getDbUserId();
-    if (!userId) return { success: false, error: "User not found" };
+    if (!userId) return;
+
     const post = await prisma.post.create({
       data: {
-        authorId: userId,
         content,
-        image: imageUrl ? imageUrl : null,
+        image: imageUrl,
+        authorId: userId,
       },
     });
 
     revalidatePath("/");
     return { success: true, post };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: "Failed to create Post" };
+  } catch (e) {
+    console.log(`Failed to create post: ${e}`);
+    throw new Error("Failed to create post");
   }
 };
 
 export const getPosts = async ({ page = 1, limit = 10 } = {}) => {
   try {
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    // Optimized query with limited includes and better pagination
     const posts = await prisma.post.findMany({
-      skip,
+      skip: offset,
       take: limit,
       orderBy: {
         createdAt: "desc",
@@ -125,26 +126,23 @@ export const toggleLike = async (postId: string) => {
         },
       });
     } else {
-      const newLike = await prisma.$transaction([
-        prisma.like.create({
-          data: {
-            postId,
-            userId,
-          },
-        }),
-        ...(post.authorId !== userId
-          ? [
-              prisma.notification.create({
-                data: {
-                  type: "LIKE",
-                  postId,
-                  userId: post.authorId,
-                  creatorId: userId,
-                },
-              }),
-            ]
-          : []),
-      ]);
+      const newLike = await prisma.like.create({
+        data: {
+          postId,
+          userId,
+        },
+      });
+
+      // Create real-time notification if not liking own post
+      if (post.authorId !== userId) {
+        await createNotificationWithSocket({
+          type: "LIKE",
+          userId: post.authorId,
+          creatorId: userId,
+          postId,
+          likeId: newLike.id,
+        });
+      }
     }
 
     revalidatePath("/");
@@ -178,15 +176,14 @@ export const createComment = async (postId: string, content: string) => {
         },
       });
 
+      // Create real-time notification if not commenting on own post
       if (post.authorId !== userId) {
-        await tx.notification.create({
-          data: {
-            type: "COMMENT",
-            userId: post.authorId,
-            creatorId: userId,
-            postId,
-            commentId: newComment.id,
-          },
+        await createNotificationWithSocket({
+          type: "COMMENT",
+          userId: post.authorId,
+          creatorId: userId,
+          postId,
+          commentId: newComment.id,
         });
       }
 

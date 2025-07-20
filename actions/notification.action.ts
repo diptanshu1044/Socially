@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { getDbUserId } from "./user.action";
 
@@ -172,5 +173,111 @@ export async function deleteNotification(notificationId: string) {
   } catch (error) {
     console.error("Error deleting notification:", error);
     return { success: false };
+  }
+}
+
+// Real-time notification creation functions
+export async function createNotificationWithSocket(notificationData: {
+  type: 'LIKE' | 'COMMENT' | 'FOLLOW';
+  userId: string;
+  creatorId: string;
+  postId?: string;
+  commentId?: string;
+  likeId?: string;
+}) {
+  try {
+    const notification = await prisma.notification.create({
+      data: notificationData,
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+          },
+        },
+        post: {
+          select: {
+            id: true,
+            content: true,
+            image: true,
+          },
+        },
+        comment: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    // Emit real-time notification via socket server
+    try {
+      const socketUrl = process.env.SOCKET_SERVER_URL || 'http://localhost:8080';
+      const response = await fetch(`${socketUrl}/api/socket/notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          notification,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to emit notification via socket server');
+      } else {
+        const result = await response.json();
+        console.log('✅ Notification emitted via socket:', result);
+      }
+    } catch (socketError) {
+      console.error('Socket server communication error:', socketError);
+    }
+
+    return { success: true, notification };
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    return { success: false, error: "Failed to create notification" };
+  }
+}
+
+export async function getUnreadMessagesCount(): Promise<number> {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return 0;
+    }
+
+    // Get the database user ID
+    const dbUserId = await getDbUserId();
+    if (!dbUserId) {
+      return 0;
+    }
+
+    // Count messages in conversations where the user is a participant
+    // but the message is not from the user (i.e., messages from others)
+    const unreadCount = await prisma.message.count({
+      where: {
+        conversation: {
+          participants: {
+            some: {
+              userId: dbUserId,
+            },
+          },
+        },
+        senderId: {
+          not: dbUserId,
+        },
+        isDeleted: false,
+      },
+    });
+
+    return unreadCount;
+  } catch (error) {
+    console.error('Error getting unread messages count:', error);
+    return 0;
   }
 }

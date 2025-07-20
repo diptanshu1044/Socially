@@ -1,9 +1,10 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { revalidateTag } from "next/cache";
+import { createNotificationWithSocket } from "./notification.action";
 import { User } from "@prisma/client";
-import { revalidatePath, revalidateTag } from "next/cache";
 
 export const syncUser = async () => {
   try {
@@ -182,21 +183,20 @@ export const toggleFollow = async (targetUserId: string) => {
       });
       return { success: true, follow: false };
     } else {
-      await prisma.$transaction([
-        prisma.follow.create({
-          data: {
-            followerId: userId,
-            followingId: targetUserId,
-          },
-        }),
-        prisma.notification.create({
-          data: {
-            type: "FOLLOW",
-            userId: targetUserId,
-            creatorId: userId,
-          },
-        }),
-      ]);
+      const newFollow = await prisma.follow.create({
+        data: {
+          followerId: userId,
+          followingId: targetUserId,
+        },
+      });
+
+      // Create real-time notification for follow
+      await createNotificationWithSocket({
+        type: "FOLLOW",
+        userId: targetUserId,
+        creatorId: userId,
+      });
+
       return { success: true, follow: true }; // Following after follow
     }
   } catch (e) {

@@ -26,6 +26,63 @@ httpServer.on('request', async (req, res) => {
         timestamp: new Date().toISOString()
       }));
     }
+  } else if (req.url === '/api/socket/notification' && req.method === 'POST') {
+    // Handle notification creation and emit to connected users
+    try {
+      console.log('📡 Received notification creation request');
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      
+      req.on('end', async () => {
+        try {
+          console.log('📡 Parsing notification data...');
+          const { notification } = JSON.parse(body);
+          
+          if (!notification) {
+            console.error('❌ No notification data provided');
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Notification data is required' }));
+            return;
+          }
+
+          console.log('📡 Notification data received:', {
+            id: notification.id,
+            userId: notification.userId,
+            type: notification.type
+          });
+
+          // Emit the notification to the target user if they're connected
+          const targetSocketId = userSockets.get(notification.userId);
+          console.log('📡 Target socket ID for user', notification.userId, ':', targetSocketId);
+          
+          if (targetSocketId && io.sockets.sockets.has(targetSocketId)) {
+            console.log('📡 Emitting notification to connected user');
+            io.to(targetSocketId).emit('new-notification', notification);
+            console.log(`📡 Emitted notification ${notification.id} to user ${notification.userId}`);
+          } else {
+            console.log(`📡 User ${notification.userId} not connected, notification stored in database`);
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: true, 
+            emitted: !!targetSocketId,
+            notificationId: notification.id,
+            targetUserId: notification.userId
+          }));
+        } catch (parseError) {
+          console.error('❌ Error parsing notification data:', parseError);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON data' }));
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error handling notification creation:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
   } else {
     res.writeHead(404);
     res.end();
@@ -112,6 +169,99 @@ const typingUsers = new Map();
 const userSockets = new Map();
 const onlineUsers = new Set();
 
+// Notification helper functions
+const createNotification = async (notificationData) => {
+  try {
+    const notification = await prisma.notification.create({
+      data: notificationData,
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+          },
+        },
+        post: {
+          select: {
+            id: true,
+            content: true,
+            image: true,
+          },
+        },
+        comment: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    // Emit real-time notification to the target user
+    const targetSocketId = userSockets.get(notification.userId);
+    if (targetSocketId && io.sockets.sockets.has(targetSocketId)) {
+      io.to(targetSocketId).emit('new-notification', notification);
+    }
+
+    return notification;
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    throw error;
+  }
+};
+
+const markNotificationsAsRead = async (notificationIds, userId) => {
+  try {
+    await prisma.notification.updateMany({
+      where: {
+        id: {
+          in: notificationIds,
+        },
+        userId,
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    // Emit read status to the user
+    const socketId = userSockets.get(userId);
+    if (socketId && io.sockets.sockets.has(socketId)) {
+      io.to(socketId).emit('notifications-read', { notificationIds });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking notifications as read:', error);
+    return { success: false };
+  }
+};
+
+const deleteNotification = async (notificationId, userId) => {
+  try {
+    await prisma.notification.delete({
+      where: {
+        id: notificationId,
+        userId,
+      },
+    });
+
+    // Emit deletion to the user
+    const socketId = userSockets.get(userId);
+    if (socketId && io.sockets.sockets.has(socketId)) {
+      io.to(socketId).emit('notification-deleted', { notificationId });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    return { success: false };
+  }
+};
+
 // Middleware for authentication
 io.use(async (socket, next) => {
   try {
@@ -179,6 +329,77 @@ io.on('connection', (socket) => {
     
     // Emit success confirmation to client
     socket.emit('user-id-set', { userId, socketId: socket.id });
+  });
+
+  // Notification event handlers
+  socket.on('create-notification', async (notificationData) => {
+    try {
+      const userId = socket.data.userId;
+      if (!userId) {
+        socket.emit('error', { message: 'User not authenticated' });
+        return;
+      }
+
+      const notification = await createNotification(notificationData);
+      socket.emit('notification-created', notification);
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      socket.emit('error', { message: 'Failed to create notification' });
+    }
+  });
+
+  socket.on('mark-notifications-read', async (notificationIds) => {
+    try {
+      const userId = socket.data.userId;
+      if (!userId) {
+        socket.emit('error', { message: 'User not authenticated' });
+        return;
+      }
+
+      const result = await markNotificationsAsRead(notificationIds, userId);
+      socket.emit('notifications-marked-read', result);
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+      socket.emit('error', { message: 'Failed to mark notifications as read' });
+    }
+  });
+
+  socket.on('delete-notification', async (notificationId) => {
+    try {
+      const userId = socket.data.userId;
+      if (!userId) {
+        socket.emit('error', { message: 'User not authenticated' });
+        return;
+      }
+
+      const result = await deleteNotification(notificationId, userId);
+      socket.emit('notification-deleted', result);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      socket.emit('error', { message: 'Failed to delete notification' });
+    }
+  });
+
+  socket.on('get-notifications-count', async () => {
+    try {
+      const userId = socket.data.userId;
+      if (!userId) {
+        socket.emit('error', { message: 'User not authenticated' });
+        return;
+      }
+
+      const unreadCount = await prisma.notification.count({
+        where: {
+          userId,
+          read: false,
+        },
+      });
+
+      socket.emit('notifications-count', { unreadCount });
+    } catch (error) {
+      console.error('Error getting notifications count:', error);
+      socket.emit('error', { message: 'Failed to get notifications count' });
+    }
   });
 
   // Join a conversation room
@@ -652,4 +873,4 @@ process.on('SIGTERM', () => {
     console.log('Process terminated');
     process.exit(0);
   });
-}); 
+});

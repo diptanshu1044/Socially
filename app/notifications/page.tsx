@@ -28,6 +28,8 @@ import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
+import notificationSocketService from "@/lib/socket-notifications";
 
 type Notification = NotificationResponse['notifications'][number];
 
@@ -45,6 +47,7 @@ const getNotificationIcon = (type: string) => {
 };
 
 export default function NotificationPage() {
+  const { userId, getToken } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -84,6 +87,64 @@ export default function NotificationPage() {
 
     fetchNotifications();
   }, []);
+
+  // Socket connection and real-time updates
+  useEffect(() => {
+    const connectSocket = async () => {
+      if (userId) {
+        try {
+          const token = await getToken();
+          if (token) {
+            notificationSocketService.connect(userId, token);
+          }
+        } catch (error) {
+          console.error('Failed to connect to socket:', error);
+        }
+      }
+    };
+
+    connectSocket();
+
+    // Set up socket event listeners
+    const handleNewNotification = (notification: Notification) => {
+      setNotifications(prev => [notification, ...prev]);
+      setTotalCount(prev => prev + 1);
+      setUnreadCount(prev => prev + 1);
+    };
+
+    const handleNotificationsRead = (data: { notificationIds: string[] }) => {
+      setNotifications(prev => 
+        prev.map(n => 
+          data.notificationIds.includes(n.id) ? { ...n, read: true } : n
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - data.notificationIds.length));
+    };
+
+    const handleNotificationDeleted = (data: { notificationId: string }) => {
+      setNotifications(prev => prev.filter(n => n.id !== data.notificationId));
+      setTotalCount(prev => prev - 1);
+    };
+
+    const handleNotificationsCount = (data: { unreadCount: number }) => {
+      setUnreadCount(data.unreadCount);
+    };
+
+    // Add event listeners
+    notificationSocketService.on('new-notification', handleNewNotification);
+    notificationSocketService.on('notifications-read', handleNotificationsRead);
+    notificationSocketService.on('notification-deleted', handleNotificationDeleted);
+    notificationSocketService.on('notifications-count', handleNotificationsCount);
+
+    // Cleanup on unmount
+    return () => {
+      notificationSocketService.off('new-notification', handleNewNotification);
+      notificationSocketService.off('notifications-read', handleNotificationsRead);
+      notificationSocketService.off('notification-deleted', handleNotificationDeleted);
+      notificationSocketService.off('notifications-count', handleNotificationsCount);
+      notificationSocketService.disconnect();
+    };
+  }, [userId, getToken]);
 
   const loadMoreNotifications = async () => {
     if (loadingMore || !hasMore) return;

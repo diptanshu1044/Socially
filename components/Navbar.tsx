@@ -15,17 +15,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-
-interface Notification {
-  id: string;
-  read: boolean;
-  type: string;
-  message: string;
-  createdAt: string;
-}
+import { getUnreadNotificationsCount, getUnreadMessagesCount } from "@/actions/notification.action";
+import notificationSocketService from "@/lib/socket-notifications";
+import { useAuth } from "@clerk/nextjs";
 
 export function Navbar() {
   const { user } = useUser();
+  const { userId, getToken } = useAuth();
   const [notificationCount, setNotificationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -54,19 +50,155 @@ export function Navbar() {
     }
   }, [user]);
 
+  // Fetch initial notification count
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        console.log('🔍 Fetching initial notification count for user:', userId);
+        const count = await getUnreadNotificationsCount();
+        console.log('📊 Initial notification count:', count);
+        setNotificationCount(count);
+      } catch (error) {
+        console.error('❌ Error fetching notification count:', error);
+      }
+    };
+
+    if (userId) {
+      fetchNotificationCount();
+    }
+  }, [userId]);
+
+  // Socket connection and real-time updates
+  useEffect(() => {
+    const connectSocket = async () => {
+      if (userId) {
+        try {
+          console.log('🔌 Connecting to socket for user:', userId);
+          const token = await getToken();
+          if (token) {
+            await notificationSocketService.connect(userId, token);
+            console.log('✅ Socket connection initiated for user:', userId);
+          }
+        } catch (error) {
+          console.error('❌ Failed to connect to socket:', error);
+        }
+      }
+    };
+
+    connectSocket();
+
+    // Set up socket event listeners for notification count
+    const handleNewNotification = (notification: any) => {
+      console.log('🔔 New notification received in Navbar:', notification);
+      setNotificationCount(prev => {
+        const newCount = prev + 1;
+        console.log('📊 Updated notification count in Navbar:', newCount);
+        return newCount;
+      });
+    };
+
+    const handleNotificationsRead = (data: { notificationIds: string[] }) => {
+      console.log('✅ Notifications marked as read in Navbar:', data.notificationIds.length);
+      setNotificationCount(prev => {
+        const newCount = Math.max(0, prev - data.notificationIds.length);
+        console.log('📊 Updated notification count after read in Navbar:', newCount);
+        return newCount;
+      });
+    };
+
+    const handleNotificationDeleted = (data: { notificationId: string }) => {
+      // We don't need to update count here as it's handled by the notifications page
+      console.log('🗑️ Notification deleted in Navbar:', data.notificationId);
+    };
+
+    const handleNotificationsCount = (data: { unreadCount: number }) => {
+      console.log('📊 Notifications count update from socket in Navbar:', data.unreadCount);
+      setNotificationCount(data.unreadCount);
+    };
+
+    // Set up socket event listeners for message count
+    const handleNewMessage = (message: any) => {
+      console.log('💬 New message received in Navbar:', message);
+      // Only increment if the message is not from the current user
+      if (message.senderId !== userId) {
+        setMessageCount(prev => {
+          const newCount = prev + 1;
+          console.log('📱 Updated message count in Navbar:', newCount);
+          return newCount;
+        });
+      }
+    };
+
+    const handleMessagesRead = (data: { conversationId: string, messageIds: string[] }) => {
+      console.log('✅ Messages marked as read in Navbar:', data.messageIds.length);
+      // Decrement by the number of messages that were read
+      setMessageCount(prev => {
+        const newCount = Math.max(0, prev - data.messageIds.length);
+        console.log('📱 Updated message count after read in Navbar:', newCount);
+        return newCount;
+      });
+    };
+
+    // Add event listeners
+    notificationSocketService.on('new-notification', handleNewNotification);
+    notificationSocketService.on('notifications-read', handleNotificationsRead);
+    notificationSocketService.on('notification-deleted', handleNotificationDeleted);
+    notificationSocketService.on('notifications-count', handleNotificationsCount);
+    notificationSocketService.on('new-message', handleNewMessage);
+    notificationSocketService.on('messages-read', handleMessagesRead);
+
+    // Debug socket connection
+    notificationSocketService.on('socket-connected', () => {
+      console.log('🔌 Navbar: Socket connected successfully');
+      // Fetch notification count again after socket connects
+      const fetchCount = async () => {
+        try {
+          const count = await getUnreadNotificationsCount();
+          console.log('📊 Notification count after socket connect:', count);
+          setNotificationCount(count);
+        } catch (error) {
+          console.error('❌ Error fetching count after socket connect:', error);
+        }
+      };
+      fetchCount();
+    });
+
+    notificationSocketService.on('socket-disconnected', () => {
+      console.log('🔌 Navbar: Socket disconnected');
+    });
+
+    notificationSocketService.on('socket-error', (error) => {
+      console.error('🔌 Navbar: Socket error:', error);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      notificationSocketService.off('new-notification', handleNewNotification);
+      notificationSocketService.off('notifications-read', handleNotificationsRead);
+      notificationSocketService.off('notification-deleted', handleNotificationDeleted);
+      notificationSocketService.off('notifications-count', handleNotificationsCount);
+      notificationSocketService.off('new-message', handleNewMessage);
+      notificationSocketService.off('messages-read', handleMessagesRead);
+      notificationSocketService.off('socket-connected', () => {});
+      notificationSocketService.off('socket-disconnected', () => {});
+      notificationSocketService.off('socket-error', () => {});
+    };
+  }, [userId, getToken]);
+
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        // Fetch unread notifications
-        const notificationsResponse = await fetch('/api/notifications');
-        const notificationsData = await notificationsResponse.json();
-        const unreadNotifications = notificationsData.notifications?.filter((n: Notification) => !n.read).length || 0;
-        setNotificationCount(unreadNotifications);
-
-        // Fetch conversations for message count
-        const conversationsResponse = await fetch('/api/conversations');
-        const conversationsData = await conversationsResponse.json();
-        setMessageCount(conversationsData.conversations?.length || 0);
+        // Fetch unread messages count
+        const unreadMessagesCount = await getUnreadMessagesCount();
+        console.log('📱 Unread messages count:', unreadMessagesCount);
+        setMessageCount(unreadMessagesCount);
+        
+        // Also refresh notification count periodically
+        if (userId) {
+          const notificationCount = await getUnreadNotificationsCount();
+          console.log('🔄 Periodic notification count refresh:', notificationCount);
+          setNotificationCount(notificationCount);
+        }
       } catch (error) {
         console.error('Error fetching counts:', error);
       }
@@ -78,7 +210,7 @@ export function Navbar() {
     const interval = setInterval(fetchCounts, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [userId]);
 
   const handleNavigation = () => {
     setSheetOpen(false);
@@ -109,7 +241,7 @@ export function Navbar() {
                 <Button variant="ghost" size="sm" className="relative">
                   <MessageCircle className="w-4 h-4" />
                   {messageCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                       {messageCount > 9 ? '9+' : messageCount}
                     </span>
                   )}
@@ -120,7 +252,7 @@ export function Navbar() {
                 <Button variant="ghost" size="sm" className="relative">
                   <Bell className="w-4 h-4" />
                   {notificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                       {notificationCount > 9 ? '9+' : notificationCount}
                     </span>
                   )}
@@ -156,7 +288,7 @@ export function Navbar() {
                       <Bell className="mr-2 h-4 w-4" />
                       <span>Notifications</span>
                       {notificationCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                           {notificationCount > 9 ? '9+' : notificationCount}
                         </span>
                       )}
@@ -167,7 +299,7 @@ export function Navbar() {
                       <MessageCircle className="mr-2 h-4 w-4" />
                       <span>Messages</span>
                       {messageCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                           {messageCount > 9 ? '9+' : messageCount}
                         </span>
                       )}
@@ -243,7 +375,7 @@ export function Navbar() {
                       <MessageCircle className="w-5 h-5" />
                       <span>Messages</span>
                       {messageCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                           {messageCount > 9 ? '9+' : messageCount}
                         </span>
                       )}
@@ -252,7 +384,7 @@ export function Navbar() {
                       <Bell className="w-5 h-5" />
                       <span>Notifications</span>
                       {notificationCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                           {notificationCount > 9 ? '9+' : notificationCount}
                         </span>
                       )}
@@ -289,7 +421,7 @@ export function Navbar() {
           <Link href="/chat" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative min-h-[44px] min-w-[44px] justify-center">
             <MessageCircle className="w-6 h-6 mb-1" />
             {messageCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                 {messageCount > 9 ? '9+' : messageCount}
               </span>
             )}
@@ -299,7 +431,7 @@ export function Navbar() {
           <Link href="/notifications" className="flex flex-col items-center py-2 px-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative min-h-[44px] min-w-[44px] justify-center">
             <Bell className="w-6 h-6 mb-1" />
             {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>
             )}
